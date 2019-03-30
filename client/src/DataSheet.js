@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
-import { clone, concat, isEmpty, isNil, pick } from 'ramda';
+import { clone, concat, isEmpty, isNil, lensPath, pick, set } from 'ramda';
 import C3Chart from 'react-c3js';
 import 'c3/c3.css';
 
@@ -158,7 +158,7 @@ const ProbeTd = ({ type, response, count, commentId, comments, dailyProbesStreak
   );
 };
 
-const TargetBlock = ({ targetData: { target, probes, comments, dailyProbesStreak }, targetTableHeaders, targetCellStreaks, isAddingProbe, probeDraft, onProbeDraftUpdate, onOpenAddNewProbe, onConfirmAddNewProbe, onCancelAddNewProbe, isArchived = false }) => (
+const TargetBlock = ({ targetData: { id, target, probes, comments, dailyProbesStreak }, targetTableHeaders, targetCellStreaks, isAddingProbe, probeDraft, onProbeDraftUpdate, onOpenAddNewProbe, onConfirmAddNewProbe, onCancelAddNewProbe, isArchived = false, onUnarchive }) => (
   <TargetView style={{ color: !isArchived ? '#000000' : '#B0B0B0'}}>
     <h3>{target}</h3>
     <TableBlock>
@@ -200,9 +200,16 @@ const TargetBlock = ({ targetData: { target, probes, comments, dailyProbesStreak
           <button disabled={isEmpty(probeDraft.date)} onClick={onConfirmAddNewProbe}>Confirmer</button>
           <button onClick={onCancelAddNewProbe}>Annuler</button>
         </NewProbeBlock>
-      ) : (
-        <AddProbeButtonView onClick={onOpenAddNewProbe}>+</AddProbeButtonView>
-      )}
+      ) : (isArchived ? (
+        <AddProbeButtonView
+          onClick={onUnarchive}
+          style={{ color: '#000000', width: 'auto' }}
+        >
+          Désarchiver
+        </AddProbeButtonView>
+        ) : (
+          <AddProbeButtonView onClick={onOpenAddNewProbe}>+</AddProbeButtonView>
+      ))}
     </TableBlock>
     <CommentsView>
       {comments.map(({ id, text }) => (
@@ -283,7 +290,19 @@ class DataSheet extends Component {
       }),
     }), {});
 
+    // toggle isArchived automatically
+    const newTargetsData = targetsData.map(targetData => {
+      const lastProbe = targetData.probes[targetData.probes.length - 1];
+
+      // targetData.isArchived = (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true);
+      if (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true) {
+        targetData.isArchived = true;
+      }
+      return targetData;
+    });
+
     this.setState({
+      targetsData: newTargetsData,
       targetsTableHeaders,
       targetsCellStreaks,
     });
@@ -384,6 +403,17 @@ class DataSheet extends Component {
     this.computeTargetsMetadata(concat(this.state.targetsData, [newTargetData]));
   };
 
+  onUnarchiveTarget = targetId => this.setState({
+    targetsData: set(
+      lensPath([
+        this.state.targetsData.findIndex(({ id }) => id === targetId),
+        'isArchived',
+      ]),
+      false,
+      this.state.targetsData,
+    ),
+  });
+
   render() {
     const { targetsData, isAddingTarget, targetDraft, isAddingProbe, addingProbeToTargetDataId, probeDraft, targetsTableHeaders, targetsCellStreaks } = this.state;
     
@@ -424,7 +454,7 @@ class DataSheet extends Component {
 
         <SeparatorView />
 
-        {targetsData.filter(({ id,isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived).map((targetData) => (
+        {targetsData.filter(({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived).map((targetData) => (
           <TargetBlock
             key={targetData.id}
             targetData={targetData}
@@ -437,6 +467,7 @@ class DataSheet extends Component {
             onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, targetsData, targetData.id)}
             onCancelAddNewProbe={this.onCancelAddNewProbe}
             isArchived
+            onUnarchive={() => this.onUnarchiveTarget(targetData.id)}
           />
         ))}
 
