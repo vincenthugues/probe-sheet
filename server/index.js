@@ -169,6 +169,30 @@ app.get('/api/users', (req, res) => {
   res.send(DB.users);
 });
 
+app.get('/api/users/:userId', (req, res) => {
+  const reqUserId = parseInt(req.params.userId);
+  res.send(DB.users.find(({id}) => id === reqUserId));
+});
+
+app.post('/api/users', (req, res) => {
+  const { email, password } = req.body;
+
+  let maxId = 0;
+  for ({ id } of DB.users) {
+    if (id > maxId) maxId = id;
+  }
+
+  const newUser = {
+    email,
+    password,
+    id: maxId + 1,
+    creationDate: new Date(),
+  };
+  DB.users.push(newUser);
+
+  res.send(newUser);
+});
+
 app.get('/api/sheets/:userId', (req, res) => {
   const reqUserId = parseInt(req.params.userId);
   res.send(DB.sheets.filter(({ userId }) => userId === reqUserId));

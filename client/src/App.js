@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { concat, isEmpty } from 'ramda'; 
@@ -17,9 +17,7 @@ import DataSheet from './DataSheet';
   ========================
   TODO:
   ========================
-  automatic archival
   toggle isArchived
-  set up github
   set up local test db
   save in db
   local storage?
@@ -34,7 +32,7 @@ import DataSheet from './DataSheet';
   comments -> notes
   ability to add notes to existing probe, and to other therapists' probes as questions?
   publish app online
-  accounts (security), autho0? (https://auth0.com/authenticate/react/google/)
+  accounts (security), auth0? (https://auth0.com/authenticate/react/google/)
   tables horizontal scrolling
   allow other therapists edition
   share with parents
@@ -45,6 +43,8 @@ import DataSheet from './DataSheet';
   -> graphe cumulatif (nb cibles retenues dans la semaine)
   demandes PECS
 */
+
+const USER_ID = 1;
 
 const HeaderView = styled.div`
   background-color: #282c34;
@@ -110,8 +110,7 @@ class Index extends Component {
   }
 
   fetchSheets = async () => {
-    const userId = 1;
-    const response = await fetch(`/api/sheets/${userId}`);
+    const response = await fetch(`/api/sheets/${USER_ID}`);
     const body = await response.json();
     if (response.status !== 200) throw Error(body.message);
     return body;
@@ -120,7 +119,7 @@ class Index extends Component {
   onConfirmAddNewSheet = async () => {
     const { sheetDraft } = this.state;
 
-    const response = await fetch(`/api/sheets/1`, { //userId
+    const response = await fetch(`/api/sheets/${USER_ID}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -173,6 +172,99 @@ class Index extends Component {
   }
 }
 
+class LogIn extends Component {
+  state = {
+    email: null,
+    password: null,
+    isSignUpOpen: false,
+  };
+
+  onLoginConfirm = async () => {
+    const response = await fetch(`/api/users/${USER_ID}`);
+    const body = await response.json();
+    if (response.status !== 200) throw Error(body.message);
+    return body;
+  };
+
+  onLoginCancel = async () => {
+    this.setState({
+      email: null,
+      password: null,
+      isSignUpOpen: false,
+    });
+  };
+
+  onSignUpOpen = async () => {
+    this.setState({
+      password: null,
+      isSignUpOpen: true,
+    });
+  };
+
+  onSignUpConfirm = async () => {
+    const { email, password } = this.state;
+    const response = await fetch(`/api/users/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }), // NO
+    });
+    const body = await response.json();
+    console.log('body', body);
+  };
+
+  onSignUpCancel = async () => {
+    this.setState({
+      password: null,
+      isSignUpOpen: false,
+    });
+  };
+
+  render = () => {
+    const { email, password, isSignUpOpen } = this.state;
+
+    return (
+      <div style={{ border: 'dashed #B0B0B0 1px', display: 'flex', flex: '1 0 auto', flexDirection: 'column', justifyContent: 'space-around', maxWidth: '400px', margin: 'auto', padding: '.4em' }}>
+        {isSignUpOpen ? (
+          <Fragment>
+            <input label="Test" placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
+            <input label="Test" placeholder="password" value={password || ''}  onChange={({ target: { value } }) => this.setState({ password: value })} />
+            <div>
+              <button disabled={isEmpty(email) || isEmpty(password)} onClick={this.onSignUpConfirm}>
+                Confirmer
+              </button>
+              <button onClick={this.onSignUpCancel}>
+                Annuler
+              </button>
+            </div>
+          </Fragment>
+        ) : (
+          <Fragment>
+            <input label="Test" placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
+            <input label="Test" placeholder="password" value={password || ''}  onChange={({ target: { value } }) => this.setState({ password: value })} />
+            <div>
+              <button disabled={isEmpty(email) || isEmpty(password)} onClick={this.onLoginConfirm}>
+                Confirmer
+              </button>
+              <Link to='/'>
+                <button onClick={this.onLoginCancel}>
+                  Annuler
+                </button>
+              </Link>
+            </div>
+            <div>
+              <button onClick={this.onSignUpOpen}>
+                Créer un compte
+              </button>
+            </div>
+          </Fragment>
+        )}
+      </div>
+    );
+  }
+};
+
 class App extends Component {
   render() {
     return (
@@ -182,6 +274,7 @@ class App extends Component {
             <HeaderView>
               <nav>
                 <LinkView2 to="/">Home</LinkView2>
+                <LinkView2 to="/login">Login</LinkView2>
               </nav>
               <h2>Feuille de cotation quotidienne</h2>
               {/* <h2>Daily probe data sheet</h2> */}
@@ -209,8 +302,9 @@ class App extends Component {
                 </select>
               </div>
             </div>
-    
+
             <Route path="/" exact component={Index} />
+            <Route path="/login" exact component={LogIn} />
             <Route path="/datasheet/:sheetId" component={DataSheet} />
           </MainView>
         </Router>
