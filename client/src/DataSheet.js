@@ -292,11 +292,10 @@ class DataSheet extends Component {
 
     // toggle isArchived automatically
     const newTargetsData = targetsData.map(targetData => {
-      const lastProbe = targetData.probes[targetData.probes.length - 1];
+      if (targetData.probes.length) {
+        const lastProbe = targetData.probes[targetData.probes.length - 1];
 
-      // targetData.isArchived = (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true);
-      if (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true) {
-        targetData.isArchived = true;
+        targetData.isArchived = (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true);
       }
       return targetData;
     });
@@ -396,11 +395,12 @@ class DataSheet extends Component {
     });
 
     const newTargetData = await response.json();
+    const newTargetsData = concat(this.state.targetsData, [newTargetData]);
     this.setState({
-      targetsData: concat(this.state.targetsData, [newTargetData]),
+      targetsData: newTargetsData,
       isAddingTarget: false,
     });
-    this.computeTargetsMetadata(concat(this.state.targetsData, [newTargetData]));
+    this.computeTargetsMetadata(newTargetsData);
   };
 
   onUnarchiveTarget = targetId => this.setState({
