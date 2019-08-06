@@ -20,14 +20,15 @@ allow pdf export/print display?
 fix rest api
 sort by last updated/last created?
 suggestion after criterium met (retention after daily streak, daily after failed retention)
-comments -> notes
-ability to add notes to existing probe, and to other therapists' probes as questions?
+comments -> notes?
+ability to add comments/notes to existing probe, and to other therapists' probes as questions?
 publish app online
 accounts (security), auth0? (https://auth0.com/authenticate/react/google/)
 tables horizontal scrolling
 allow other therapists edition
 share with parents
 plug in search
+internationalization
 offline mode
 https
 node-rate-limiter-flexible

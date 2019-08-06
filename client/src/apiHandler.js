@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import axios from 'axios';
 import { pick } from 'ramda';
 
@@ -125,7 +127,7 @@ export const createTarget = async (draft) => {
 // PROBES
 // ////////////////
 
-export const fetchProbes = async (targetId) => {
+export const fetchProbes = async () => { // TODO: handle targetId
   try {
     const { data: probes } = await axios.get(`${SERVER_URL}/probes`);
 

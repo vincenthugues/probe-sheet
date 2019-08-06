@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
 });
 
 router.delete('/:targetId', async (req, res) => {
-  const result = await req.context.models.Target.destroy({
+  await req.context.models.Target.destroy({
     where: { id: req.params.targetId },
   });
 

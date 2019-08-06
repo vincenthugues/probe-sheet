@@ -1,0 +1,707 @@
+import React, { Component, Fragment } from 'react';
+import PropTypes from 'prop-types';
+import styled from 'styled-components';
+import { isEmpty, lensPath, set } from 'ramda';
+// import C3Chart from 'react-c3js';
+
+import {
+  fetchUsers, fetchTargets, createTarget, fetchProbes, createProbe, fetchComments,
+} from './apiHandler';
+
+const DEFAULT_DAILY_PROBES_STREAK = 3;
+const DEFAULT_BASELINE_PROBES = 3;
+
+const PROBE_TYPE = {
+  BASELINE: 'Baseline',
+  DAILY: 'Daily',
+  RETENTION: 'Retention',
+};
+
+const INITIAL_STATE = {
+  targets: [],
+  probes: [],
+  comments: [],
+
+  currentUser: {
+    id: 1,
+    name: 'John Doe',
+  },
+  isAddingTarget: false,
+  targetDraft: {
+    target: '',
+  },
+  isAddingProbe: false,
+  addingProbeToTargetId: null,
+  probeDraft: {},
+
+  targetsTableHeaders: {},
+  targetCellStreaks: {},
+};
+
+const TargetView = styled.div`
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+
+  margin: 18px;
+`;
+
+const TableBlock = styled.div`
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: row;
+
+  margin: auto;
+`;
+
+const NewProbeBlockView = styled.div`
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+
+  margin: 0 8px;
+  padding: 4px;
+  width: 18em;
+  border: 1px dashed;
+`;
+const NewProbeBlock = ({
+  probeDraft: {
+    type, date, therapist, response, comment,
+  }, onFieldUpdate, children,
+}) => (
+  <NewProbeBlockView>
+    <div>
+Type
+      {' '}
+      <select value={type} onChange={({ target: { value } }) => onFieldUpdate('type', value)}>
+        <option value={PROBE_TYPE.BASELINE}>Ligne de base</option>
+        <option value={PROBE_TYPE.DAILY}>Probe</option>
+        <option value={PROBE_TYPE.RETENTION}>Probe de rétention</option>
+      </select>
+
+    </div>
+    <div>
+Date
+      {' '}
+      <input value={date} onChange={({ target: { value } }) => onFieldUpdate('date', value)} />
+    </div>
+    <div>
+Thérapeute
+      <input value={therapist} onChange={({ target: { value } }) => onFieldUpdate('therapist', value)} />
+    </div>
+    <div>
+Réponse
+      {' '}
+      <select value={response} onChange={({ target: { value } }) => onFieldUpdate('response', value === 'true')}>
+        <option value>Oui</option>
+        <option value={false}>Non</option>
+      </select>
+
+    </div>
+    <br />
+    Commentaires/Notes
+    {' '}
+    <textarea value={comment} onChange={({ target: { value } }) => onFieldUpdate('comment', value)} />
+    <br />
+    {children}
+  </NewProbeBlockView>
+);
+NewProbeBlock.propTypes = {
+  probeDraft: PropTypes.shape({
+    type: PropTypes.string,
+    date: PropTypes.string,
+    therapist: PropTypes.string,
+    response: PropTypes.bool,
+    comment: PropTypes.string,
+  }).isRequired,
+  onFieldUpdate: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+const NewTargetBlockView = styled.div`
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+
+  margin: 16px auto;
+  width: 20em;
+  border: 1px dashed;
+`;
+const NewTargetBlock = ({
+  targetDraft: { target, baselineProbesNumber, dailyProbesStreak },
+  onFieldUpdate,
+  children,
+}) => (
+  <NewTargetBlockView>
+    <label htmlFor="target">
+      Cible
+      <input id="target" value={target} onChange={({ target: { value } }) => onFieldUpdate('target', value)} />
+    </label>
+    <label htmlFor="baselineProbesNumber">
+      Baseline #
+      <input id="baselineProbesNumber" value={baselineProbesNumber} onChange={({ target: { value } }) => onFieldUpdate('baselineProbesNumber', value)} />
+    </label>
+    <label htmlFor="dailyProbesStreak">
+      Daily streak #
+      <input id="dailyProbesStreak" value={dailyProbesStreak} onChange={({ target: { value } }) => onFieldUpdate('dailyProbesStreak', value)} />
+    </label>
+    {children}
+  </NewTargetBlockView>
+);
+NewTargetBlock.propTypes = {
+  targetDraft: PropTypes.shape({
+    target: PropTypes.string,
+    baselineProbesNumber: PropTypes.number,
+    dailyProbesStreak: PropTypes.number,
+  }).isRequired,
+  onFieldUpdate: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+const Table = styled.table`
+  border-collapse: collapse;
+`;
+
+const Th = styled.th`
+  border: solid 1px;
+  padding: 8px;
+
+  max-width: 120px;
+`;
+
+const Td = styled.td`
+  border: solid 1px;
+  padding: 8px;
+
+  max-width: 80px;
+`;
+
+const AddProbeButtonView = styled.button`
+  height: 32px;
+  width: 40px;
+
+  font-size: 1.4rem;
+  margin: auto 24px;
+`;
+
+const CommentsView = styled.div`
+  text-align: left;
+  margin-left: 1em;
+`;
+
+const SeparatorView = styled.div`
+  display: block;
+  overflow: hidden;
+  border-style: inset;
+  border-width: 1px;
+
+  margin: 1.2em auto;
+  width: 60%;
+`;
+
+const AddTargetButtonView = styled.button`
+  font-size: 1.2rem;
+  margin: auto 24px;
+`;
+
+const ProbeTd = ({
+  type, response, count, commentId, comments, dailyProbesStreak,
+}) => {
+  const getBackgroundColor = () => {
+    if (!response) return 'none';
+
+    if (type === PROBE_TYPE.DAILY && count >= dailyProbesStreak) {
+      return '#FFEE55';
+    }
+    if (type === PROBE_TYPE.RETENTION) {
+      return '#FF9DF3';
+    }
+
+    return 'none';
+  };
+  const commentText = commentId && comments.find(({ id }) => id === commentId).text;
+
+  return (
+    <Td style={{ backgroundColor: getBackgroundColor() }}>
+      {response ? 'Oui' : 'Non'}
+      {commentText && (
+      <sup title={commentText}>
+[
+        {commentId}
+]
+      </sup>
+      )}
+    </Td>
+  );
+};
+ProbeTd.propTypes = {
+  type: PropTypes.string.isRequired,
+  response: PropTypes.bool.isRequired,
+  count: PropTypes.number.isRequired,
+  commentId: PropTypes.number.isRequired,
+  comments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    text: PropTypes.string.isRequired,
+  })).isRequired,
+  dailyProbesStreak: PropTypes.number.isRequired,
+};
+
+const TargetBlock = ({
+  target: {
+    name,
+    comments = [],
+    dailyProbesStreak,
+  },
+  probes,
+  targetTableHeaders,
+  targetCellStreaks,
+  isAddingProbe,
+  probeDraft,
+  onProbeDraftUpdate,
+  onOpenAddNewProbe,
+  onConfirmAddNewProbe,
+  onCancelAddNewProbe,
+  isArchived = false,
+  onUnarchive,
+  users,
+}) => (
+  <TargetView style={{ color: !isArchived ? '#000000' : '#B0B0B0' }}>
+    <h3>{name}</h3>
+    <TableBlock>
+      <Table>
+        <thead>
+          <tr>
+            <Th style={{ border: '20px' }} />
+            {targetTableHeaders.map(({ type, span }, idx) => (
+              <Th key={idx} colSpan={span} title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}>
+                {{
+                  [PROBE_TYPE.BASELINE]: 'Ligne de base',
+                  [PROBE_TYPE.DAILY]: 'Probes',
+                  [PROBE_TYPE.RETENTION]: 'Probe de rétention',
+                }[type]}
+              </Th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <Th>Date</Th>
+            {probes.map(({ id: probeId, date }) => (
+              <Td key={probeId}>
+                {new Date(date).toDateString()}
+              </Td>
+            ))}
+          </tr>
+          <tr>
+            <Th>Thérapeute</Th>
+            {probes.map(({ id: probeId, therapistId }) => (
+              <Td key={probeId}>
+                {users.find(({ id }) => id === therapistId).name}
+              </Td>
+            ))}
+          </tr>
+          <tr>
+            <Th>Réponse</Th>
+            {probes.map(({
+              id: probeId, type, response, commentId,
+            }, k) => (
+              <ProbeTd
+                key={probeId}
+                type={type}
+                response={response}
+                count={targetCellStreaks[k]}
+                commentId={commentId}
+                comments={comments}
+                dailyProbesStreak={dailyProbesStreak}
+              />
+            ))}
+          </tr>
+        </tbody>
+      </Table>
+
+      {isArchived && (
+      <AddProbeButtonView
+        onClick={onUnarchive}
+        style={{ color: '#000000', width: 'auto' }}
+      >
+    Désarchiver
+      </AddProbeButtonView>
+      )}
+      {isAddingProbe ? (
+        <NewProbeBlock probeDraft={probeDraft} onFieldUpdate={onProbeDraftUpdate}>
+          <button type="button" disabled={isEmpty(probeDraft.date)} onClick={onConfirmAddNewProbe}>Confirmer</button>
+          <button type="button" onClick={onCancelAddNewProbe}>Annuler</button>
+        </NewProbeBlock>
+      ) : (
+        <AddProbeButtonView onClick={onOpenAddNewProbe}>+</AddProbeButtonView>
+      )}
+    </TableBlock>
+    <CommentsView>
+      {comments.map(({ id, text }) => (
+        <div key={id}>
+[
+          {id}
+]
+          {' '}
+          {text}
+        </div>
+      ))}
+    </CommentsView>
+  </TargetView>
+);
+TargetBlock.propTypes = {
+  target: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    comments: PropTypes.array.isRequired,
+    dailyProbesStreak: PropTypes.number.isRequired,
+  }).isRequired,
+  probes: PropTypes.arrayOf().isRequired,
+  targetTableHeaders: PropTypes.arrayOf().isRequired,
+  targetCellStreaks: PropTypes.arrayOf().isRequired,
+  isAddingProbe: PropTypes.bool.isRequired,
+  probeDraft: PropTypes.objectOf().isRequired,
+  onProbeDraftUpdate: PropTypes.func.isRequired,
+  onOpenAddNewProbe: PropTypes.func.isRequired,
+  onConfirmAddNewProbe: PropTypes.func.isRequired,
+  onCancelAddNewProbe: PropTypes.func.isRequired,
+  isArchived: PropTypes.bool,
+  onUnarchive: PropTypes.func.isRequired,
+  users: PropTypes.arrayOf().isRequired,
+};
+TargetBlock.defaultProps = {
+  isArchived: false,
+};
+
+class DataSheet extends Component {
+  constructor(props) {
+    super(props);
+    this.state = INITIAL_STATE;
+  }
+
+  async componentDidMount() {
+    const { match } = this.props;
+    const sheetId = Number(match.params.sheetId);
+
+    const users = await fetchUsers();
+    this.setState({ users });
+
+    const targets = await fetchTargets(sheetId);
+    this.setState({ targets });
+
+    for (const { id } of targets) {
+      const probes = await fetchProbes(id);
+      this.setState({ probes });
+    }
+
+    const comments = await fetchComments();
+    this.setState({ comments });
+
+    this.computeTargetsMetadata();
+  }
+
+  onOpenAddNewProbe = (selectedTargetId) => {
+    this.setState(({ targets, probes, targetsCellStreaks }) => ({
+      isAddingProbe: true,
+      addingProbeToTargetId: selectedTargetId,
+      probeDraft: this.getNextProbeDraft(
+        targets.find(({ id }) => id === selectedTargetId),
+        probes.filter(({ targetId }) => targetId === selectedTargetId),
+        targetsCellStreaks[selectedTargetId],
+      ),
+    }));
+  }
+
+  onConfirmAddNewProbe = async (probeDraft, currentTargetId) => {
+    const newProbe = await createProbe({
+      ...probeDraft, // type, date, therapist, response, comment
+      ownerId: 1, // TODO
+      therapistId: 1, // TODO
+      targetId: currentTargetId, // TODO
+    });
+
+    this.setState(state => ({
+      probes: [
+        ...state.probes,
+        newProbe,
+      ],
+      isAddingProbe: false,
+    }));
+    this.computeTargetsMetadata();
+  }
+
+  onCancelAddNewProbe = () => {
+    this.setState({
+      isAddingProbe: false,
+    });
+  }
+
+  onAddNewTarget = async () => {
+    const { match } = this.props;
+    const { targetDraft, targets } = this.state;
+
+    const newTarget = await createTarget({
+      ...targetDraft,
+      name: targetDraft.target,
+      creationDate: Date.now(),
+      ownerId: 1, // TODO
+      sheetId: match.params.sheetId,
+    });
+
+    this.setState({
+      targets: [
+        ...targets,
+        newTarget,
+      ],
+      isAddingTarget: false,
+    });
+    this.computeTargetsMetadata();
+  }
+
+  onUnarchiveTarget = (targetId) => {
+    this.setState(state => ({
+      targets: set(
+        lensPath([
+          state.targets.findIndex(({ id }) => id === targetId),
+          'isArchived',
+        ]),
+        false,
+        state.targets,
+      ),
+    }));
+  }
+
+  getNextProbeDraft = (target, probes, targetCellStreaks) => {
+    const { currentUser } = this.state;
+
+    const guessNextProbeType = ({ baselineProbesNumber, dailyProbesStreak }) => {
+      if (probes.length === 0 || probes.length < baselineProbesNumber) {
+        return PROBE_TYPE.BASELINE;
+      }
+
+      const prevProbe = probes[probes.length - 1];
+      const prevStreak = targetCellStreaks[probes.length - 1];
+      if (prevProbe.type === PROBE_TYPE.BASELINE && prevStreak >= baselineProbesNumber) {
+        return PROBE_TYPE.DAILY;
+      }
+      if (prevProbe.type === PROBE_TYPE.DAILY && prevStreak >= dailyProbesStreak) {
+        return PROBE_TYPE.RETENTION;
+      }
+      if (prevProbe.type === PROBE_TYPE.RETENTION && prevProbe.response === false) {
+        return PROBE_TYPE.DAILY;
+      }
+
+      return PROBE_TYPE.DAILY;
+    };
+
+    return {
+      type: guessNextProbeType(target),
+      date: (new Date()).toISOString().slice(5, 10).split('-')
+        .reverse()
+        .join('/'),
+      therapist: currentUser.name,
+      response: true,
+      comment: '',
+    };
+  }
+
+  // TODO: cleanup
+  computeTargetsMetadata = () => {
+    const { targets, probes } = this.state;
+
+    const targetsTableHeaders = targets.reduce((acc1, { id }) => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === id);
+
+      return {
+        ...acc1,
+        [id]: targetProbes.reduce((acc2, { type }) => {
+          if (acc2.length && acc2[acc2.length - 1].type === type) {
+            return set([acc2.length - 1, 'span'], acc2[acc2.length - 1].span + 1, acc2);
+          }
+          return acc2.push({ type, span: 1 });
+        }, []),
+      };
+    }, {});
+
+    // TODO: refactor targetsCellStreaks logic
+    let tmp = [];
+    const targetsCellStreaks = targets.reduce((acc, { id }) => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === id);
+
+      return {
+        ...acc,
+        [id]: targetProbes.map(({ type, response }, i) => {
+          let count = response ? 1 : 0;
+          if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
+            if (
+              i > 0 && targetProbes[i - 1].type === type
+              && targetProbes[i - 1].response === true
+            ) {
+              count = tmp[i - 1];
+            } else {
+              while (
+                targetProbes[i + count]
+                && targetProbes[i + count].type === type
+                && targetProbes[i + count].response === true
+              ) {
+                count += 1;
+              }
+            }
+          }
+
+          if (i === 0) {
+            tmp = [count];
+          } else {
+            tmp.push(count);
+          }
+
+          return count;
+        }),
+      };
+    }, {});
+
+    // toggle isArchived automatically
+    const newTargets = targets.map((target) => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+
+      if (targetProbes && targetProbes.length) {
+        const lastProbe = targetProbes[targetProbes.length - 1];
+
+        return {
+          ...target,
+          isArchived: (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true),
+        };
+      }
+      return target;
+    });
+
+    this.setState({
+      targets: newTargets,
+      targetsTableHeaders,
+      targetsCellStreaks,
+    });
+  }
+
+  render() {
+    const {
+      targets,
+      probes,
+      isAddingTarget,
+      targetDraft,
+      isAddingProbe,
+      addingProbeToTargetId,
+      probeDraft,
+      targetsTableHeaders,
+      targetsCellStreaks,
+      users,
+    } = this.state;
+
+    return (
+      <Fragment>
+        {targets.filter(
+          ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
+        ).map(target => (
+          <TargetBlock
+            key={target.id}
+            target={target}
+            targetTableHeaders={targetsTableHeaders[target.id]}
+            targetCellStreaks={targetsCellStreaks[target.id]}
+            probes={probes.filter(({ targetId }) => targetId === target.id)}
+            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
+            probeDraft={probeDraft}
+            onProbeDraftUpdate={(fieldName, value) => this.setState({
+              probeDraft: {
+                ...probeDraft,
+                [fieldName]: value,
+              },
+            })}
+            onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+            onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
+            onCancelAddNewProbe={this.onCancelAddNewProbe}
+            users={users}
+          />
+        ))}
+        <br />
+
+        {isAddingTarget ? (
+          <NewTargetBlock
+            targetDraft={targetDraft}
+            onFieldUpdate={(fieldName, value) => this.setState({
+              targetDraft: {
+                ...targetDraft,
+                [fieldName]: value,
+              },
+            })}
+          >
+            <div>
+              <button type="button" disabled={isEmpty(targetDraft.target)} onClick={this.onAddNewTarget}>
+                Confirmer
+              </button>
+              <button type="button" onClick={() => this.setState({ isAddingTarget: false })}>
+                Annuler
+              </button>
+            </div>
+          </NewTargetBlock>
+        ) : (
+          <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { target: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
+            Nouvelle cible
+          </AddTargetButtonView>
+        )}
+
+        <SeparatorView />
+
+        {targets.filter(
+          ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived,
+        ).map(target => (
+          <TargetBlock
+            key={target.id}
+            target={target}
+            targetTableHeaders={targetsTableHeaders[target.id]}
+            targetCellStreaks={targetsCellStreaks[target.id]}
+            probes={probes.filter(({ targetId }) => targetId === target.id)}
+            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
+            probeDraft={probeDraft}
+            onProbeDraftUpdate={(fieldName, value) => this.setState({
+              probeDraft: {
+                ...probeDraft,
+                [fieldName]: value,
+              },
+            })}
+            // onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+            // onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
+            // onCancelAddNewProbe={this.onCancelAddNewProbe}
+            isArchived
+            onUnarchive={() => this.onUnarchiveTarget(target.id)}
+            users={users}
+          />
+        ))}
+
+        {/* <C3Chart
+          style={{ maxWidth: '60%', margin: '40px auto' }}
+          data={{
+            labels: true,
+            padding: { left: 0, right: 0 },
+            axis: {
+              x: { min: 1, padding: { left: 0 }, tick: { outer: false } },
+              y: { min: 0, padding: { bottom: 0 }, tick: { outer: false } },
+            },
+            columns: [
+              ['Semaine', 1, 2, 3, 4, 5, 6],
+              ['Cibles retenues', 0, 4, 6, 9, 12, 13],
+            ],
+            x: 'Semaine',
+          }}
+        /> */}
+      </Fragment>
+    );
+  }
+}
+DataSheet.propTypes = {
+  match: PropTypes.shape({
+    params: PropTypes.shape({
+      sheetId: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
+export default DataSheet;

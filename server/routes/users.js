@@ -2,7 +2,7 @@ import express from 'express';
 
 const router = express.Router();
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req, res) => {
   const users = await req.context.models.User.findAll();
   return res.send(users);
 });

@@ -1,9 +1,12 @@
 import React, { Component, Fragment } from 'react';
+import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
-import { concat, isEmpty } from 'ramda'; 
+import { concat, isEmpty } from 'ramda';
 import styled from 'styled-components';
 
-import { fetchUser, createUser, fetchSheets, createSheet } from './apiHandler';
+import {
+  fetchUser, createUser, fetchSheets, createSheet,
+} from './apiHandler';
 import DataSheet from './DataSheet';
 
 const USER_ID = 1;
@@ -56,45 +59,67 @@ const NewSheetBlockView = styled.div`
 `;
 const NewSheetBlock = ({ sheetDraft: { student, skillDomain }, onFieldUpdate, children }) => (
   <NewSheetBlockView>
-    <div>Elève <input value={student} onChange={({ target: { value } }) => onFieldUpdate('student', value)} /></div>
-    <div>Domaine <input value={skillDomain} onChange={({ target: { value } }) => onFieldUpdate('skillDomain', value)} /></div>
+    <div>
+Elève
+      {' '}
+      <input value={student} onChange={({ target: { value } }) => onFieldUpdate('student', value)} />
+    </div>
+    <div>
+Domaine
+      {' '}
+      <input value={skillDomain} onChange={({ target: { value } }) => onFieldUpdate('skillDomain', value)} />
+    </div>
     {children}
   </NewSheetBlockView>
 );
+NewSheetBlock.propTypes = {
+  sheetDraft: PropTypes.shape({
+    student: PropTypes.string,
+    skillDomain: PropTypes.string,
+  }).isRequired,
+  onFieldUpdate: PropTypes.func.isRequired,
+  children: PropTypes.node.isRequired,
+};
 
 class Index extends Component {
-  state = {
-    sheets: [],
-    sheetDraft: {},
-    isAddingSheet: false,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      sheets: [],
+      sheetDraft: {},
+      isAddingSheet: false,
+    };
+  }
 
-  async componentDidMount() {
+  componentDidMount = async () => {
     const sheets = await fetchSheets();
     this.setState({ sheets });
   }
 
   onConfirmAddNewSheet = async () => {
     const { sheetDraft } = this.state;
-    
+
     const newSheet = await createSheet({
       ...sheetDraft,
       creationDate: Date.now(),
       lastUpdateDate: Date.now(),
-      ownerId: 1, // TODO
+      ownerId: USER_ID, // TODO
     });
 
-    this.setState({
-      sheets: concat(this.state.sheets, [newSheet]),
+    this.setState(state => ({
+      sheets: concat(state.sheets, [newSheet]),
       isAddingSheet: false,
-    });
-  };
+    }));
+  }
 
   render() {
     const { sheets, sheetDraft, isAddingSheet } = this.state;
-    
+
     return (
-      <div style={{ display: 'flex', flex: '1 0 auto', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', padding: '10px' }}>
+      <div style={{
+        display: 'flex', flex: '1 0 auto', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', padding: '10px',
+      }}
+      >
         {sheets.map(({ id, student, skillDomain }) => (
           <LinkView key={id} to={`/datasheet/${id}`}>
             <SheetView>
@@ -105,18 +130,23 @@ class Index extends Component {
         ))}
         <SheetView>
           {isAddingSheet ? (
-            <NewSheetBlock sheetDraft={sheetDraft} onFieldUpdate={(fieldName, value) => this.setState({ sheetDraft: { ...sheetDraft, [fieldName]: value } })}>
+            <NewSheetBlock
+              sheetDraft={sheetDraft}
+              onFieldUpdate={(fieldName, value) => this.setState({
+                sheetDraft: { ...sheetDraft, [fieldName]: value },
+              })}
+            >
               <div>
-                <button disabled={isEmpty(sheetDraft.student)} onClick={this.onConfirmAddNewSheet}>
+                <button type="button" disabled={isEmpty(sheetDraft.student)} onClick={this.onConfirmAddNewSheet}>
                   Confirmer
                 </button>
-                <button onClick={() => this.setState({ isAddingSheet: false })}>
+                <button type="button" onClick={() => this.setState({ isAddingSheet: false })}>
                   Annuler
                 </button>
               </div>
             </NewSheetBlock>
           ) : (
-            <button onClick={() => this.setState({ isAddingSheet: true, sheetDraft: { student: '', skillDomain: '', } })}>
+            <button type="button" onClick={() => this.setState({ isAddingSheet: true, sheetDraft: { student: '', skillDomain: '' } })}>
               Nouvelle feuille
             </button>
           )}
@@ -127,17 +157,20 @@ class Index extends Component {
 }
 
 class LogIn extends Component {
-  state = {
-    email: null,
-    password: null,
-    isSignUpOpen: false,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      email: null,
+      password: null,
+      isSignUpOpen: false,
+    };
+  }
 
   onLoginConfirm = async () => {
     const user = await fetchUser(USER_ID);
 
     console.log('user', user);
-  };
+  }
 
   onLoginCancel = async () => {
     this.setState({
@@ -145,30 +178,30 @@ class LogIn extends Component {
       password: null,
       isSignUpOpen: false,
     });
-  };
+  }
 
   onSignUpOpen = async () => {
     this.setState({
       password: null,
       isSignUpOpen: true,
     });
-  };
+  }
 
   onSignUpConfirm = async () => {
     const { email, password } = this.state;
     const newUser = await createUser(email, password);
 
     console.log('newUser', newUser);
-  };
+  }
 
-  onSignUpCancel = async () => {
+  onSignUpCancel = () => {
     this.setState({
       password: null,
       isSignUpOpen: false,
     });
-  };
+  }
 
-  render = () => {
+  render() {
     const { email, password, isSignUpOpen } = this.state;
 
     return (
@@ -180,17 +213,18 @@ class LogIn extends Component {
         justifyContent: 'space-around',
         maxWidth: '400px',
         margin: 'auto',
-        padding: '.4em' }
-      }>
+        padding: '.4em',
+      }}
+      >
         {isSignUpOpen ? (
           <form>
             <input label="Test" placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
-            <input label="Test" placeholder="password" value={password || ''}  onChange={({ target: { value } }) => this.setState({ password: value })} />
+            <input label="Test" placeholder="password" value={password || ''} onChange={({ target: { value } }) => this.setState({ password: value })} />
             <div>
-              <button disabled={isEmpty(email) || isEmpty(password)} onClick={this.onSignUpConfirm}>
+              <button type="button" disabled={isEmpty(email) || isEmpty(password)} onClick={this.onSignUpConfirm}>
                 Confirmer
               </button>
-              <button onClick={this.onSignUpCancel}>
+              <button type="button" onClick={this.onSignUpCancel}>
                 Annuler
               </button>
             </div>
@@ -198,19 +232,19 @@ class LogIn extends Component {
         ) : (
           <Fragment>
             <input label="Test" placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
-            <input label="Test" placeholder="password" value={password || ''}  onChange={({ target: { value } }) => this.setState({ password: value })} />
+            <input label="Test" placeholder="password" value={password || ''} onChange={({ target: { value } }) => this.setState({ password: value })} />
             <div>
-              <button disabled={isEmpty(email) || isEmpty(password)} onClick={this.onLoginConfirm}>
+              <button type="button" disabled={isEmpty(email) || isEmpty(password)} onClick={this.onLoginConfirm}>
                 Confirmer
               </button>
-              <Link to='/'>
-                <button onClick={this.onLoginCancel}>
+              <Link to="/">
+                <button type="button" onClick={this.onLoginCancel}>
                   Annuler
                 </button>
               </Link>
             </div>
             <div>
-              <button onClick={this.onSignUpOpen}>
+              <button type="button" onClick={this.onSignUpOpen}>
                 Créer un compte
               </button>
             </div>
@@ -219,7 +253,7 @@ class LogIn extends Component {
       </div>
     );
   }
-};
+}
 
 export default () => (
   <div className="App">
@@ -237,26 +271,26 @@ export default () => (
             <div>Domaine de compétence : language réceptif</div>
           </div>
         </HeaderView>
-        <div style={{ display: 'flex', flex: '1 0 auto', justifyContent: 'space-evenly', border: '1px solid'}}>
+        <div style={{
+          display: 'flex',
+          flex: '1 0 auto',
+          justifyContent: 'center',
+          border: '1px solid',
+        }}
+        >
           Filters:
-          <div>
-            <label>Elève</label>
-            <select>
-              <option value={null}>--------</option>
-              <option value={1}>Elève 1</option>
-              <option value={2}>Elève 2</option>
-              <option value={3}>Elève 3</option>
-            </select>
-          </div>
-          <div>
-            <label>Domaine de compétence</label>
-            <select>
-              <option value={null}>--------------</option>
-              <option value="1">Domaine 1</option>
-              <option value="2">Domaine 2</option>
-              <option value="3">Domaine 3</option>
-            </select>
-          </div>
+          <select>
+            <option value={null}>---- Elève ----</option>
+            <option value={1}>Elève 1</option>
+            <option value={2}>Elève 2</option>
+            <option value={3}>Elève 3</option>
+          </select>
+          <select>
+            <option value={null}>--- Domaine de compétence ---</option>
+            <option value="1">Domaine 1</option>
+            <option value="2">Domaine 2</option>
+            <option value="3">Domaine 3</option>
+          </select>
         </div>
 
         <Route path="/" exact component={Index} />
