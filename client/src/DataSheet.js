@@ -1,13 +1,10 @@
 import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
-import { clone, concat, isEmpty, isNil, lensPath, pick, set } from 'ramda';
+import { concat, isEmpty, isNil, lensPath, pick, set } from 'ramda';
 import C3Chart from 'react-c3js';
 import 'c3/c3.css';
 
-const currentUser = {
-  id: 1,
-  name: 'Nia',
-};
+import { fetchUsers, fetchTargets, createTarget, updateTarget, fetchProbes, createProbe, fetchComments } from './apiHandler';
 
 const DEFAULT_DAILY_PROBES_STREAK = 3;
 const DEFAULT_BASELINE_PROBES = 3;
@@ -19,18 +16,22 @@ const PROBE_TYPE = {
 };
 
 const INITIAL_STATE = {
-  response: '',
-  post: '',
-  responseToPost: '',
+  targets: [],
+  probes: [],
+  comments: [],
 
+  currentUser: {
+    id: 1,
+    name: 'Nia',
+  },
   isAddingTarget: false,
   targetDraft: {
     target: '',
   },
   isAddingProbe: false,
-  addingProbeToTargetDataId: null,
+  addingProbeToTargetId: null,
   probeDraft: {},
-  targetsData: [],
+
   targetsTableHeaders: {},
   targetCellStreaks: {},
 };
@@ -61,7 +62,7 @@ const NewProbeBlockView = styled.div`
   width: 18em;
   border: 1px dashed;
 `;
-const NewProbeBlock = ({ probeDraft: { type, date, therapist, response, comment}, onFieldUpdate, children }) => (
+const NewProbeBlock = ({ probeDraft: { type, date, therapist, response, comment }, onFieldUpdate, children }) => (
   <NewProbeBlockView>
     <div>Type <select value={type} onChange={({ target: { value } }) => onFieldUpdate('type', value)} >
       <option value={PROBE_TYPE.BASELINE}>Ligne de base</option>
@@ -100,7 +101,6 @@ const NewTargetBlock = ({ targetDraft: { target, baselineProbesNumber, dailyProb
 );
 
 const Table = styled.table`
-  border: solid 1px;
   border-collapse: collapse;
 `;
 
@@ -158,19 +158,21 @@ const ProbeTd = ({ type, response, count, commentId, comments, dailyProbesStreak
   );
 };
 
-const TargetBlock = ({ targetData: { id, target, probes, comments, dailyProbesStreak }, targetTableHeaders, targetCellStreaks, isAddingProbe, probeDraft, onProbeDraftUpdate, onOpenAddNewProbe, onConfirmAddNewProbe, onCancelAddNewProbe, isArchived = false, onUnarchive }) => (
+// params: id, target, baselineProbesNumber, dailyProbesStreak
+// subres: probes
+const TargetBlock = ({ target: { id, name, comments = [], dailyProbesStreak }, probes, targetTableHeaders, targetCellStreaks, isAddingProbe, probeDraft, onProbeDraftUpdate, onOpenAddNewProbe, onConfirmAddNewProbe, onCancelAddNewProbe, isArchived = false, onUnarchive, users }) => (
   <TargetView style={{ color: !isArchived ? '#000000' : '#B0B0B0'}}>
-    <h3>{target}</h3>
+    <h3>{name}</h3>
     <TableBlock>
       <Table>
         <thead>
           <tr>
-            <Th />
+            <Th style={{ border: '20px' }} />
             {targetTableHeaders.map(({ type, span }, j) => (
               <Th key={j} colSpan={span} title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}>
                 {{
                   [PROBE_TYPE.BASELINE]: 'Ligne de base',
-                  [PROBE_TYPE.DAILY]: 'Probe',
+                  [PROBE_TYPE.DAILY]: 'Probes',
                   [PROBE_TYPE.RETENTION]: 'Probe de rétention',
                 }[type]}
               </Th>
@@ -180,11 +182,11 @@ const TargetBlock = ({ targetData: { id, target, probes, comments, dailyProbesSt
         <tbody>
         <tr>
             <Th>Date</Th>
-            {probes.map(({date}, i) => <Td key={i}>{date}</Td>)}
+            {probes.map(({date}, i) => <Td key={i}>{new Date(date).toDateString()}</Td>)}
           </tr>
           <tr>
             <Th>Thérapeute</Th>
-            {probes.map(({therapist}, i) => <Td key={i}>{therapist}</Td>)}
+            {probes.map(({therapistId}, i) => <Td key={i}>{users.find(({id}) => id === therapistId).name}</Td>)}
           </tr>
           <tr>
             <Th>Réponse</Th>
@@ -213,7 +215,7 @@ const TargetBlock = ({ targetData: { id, target, probes, comments, dailyProbesSt
     </TableBlock>
     <CommentsView>
       {comments.map(({ id, text }) => (
-        <p key={id}>[{id}] {text}</p>
+        <div key={id}>[{id}] {text}</div>
       ))}
     </CommentsView>
   </TargetView>
@@ -222,93 +224,100 @@ const TargetBlock = ({ targetData: { id, target, probes, comments, dailyProbesSt
 class DataSheet extends Component {
   state = INITIAL_STATE;
 
-  componentDidMount() {
-    const sheetId = this.props.match.params.sheetId;
-    this.fetchTargetsData(sheetId)
-      .then(targetsData => {
-        this.setState({ targetsData });
-        this.computeTargetsMetadata(targetsData);
-      })
-      .catch(err => console.log(err));
+  componentDidMount = async () => {
+    const sheetId = Number(this.props.match.params.sheetId);
+
+    const users = await fetchUsers();
+    this.setState({ users });
+
+    const targets = await fetchTargets(sheetId);
+    this.setState({ targets });
+    this.computeTargetsMetadata();
+
+    for (const { id } of targets) {
+      const probes = await fetchProbes(id);
+      this.setState({ probes });
+      this.computeTargetsMetadata();
+    }
+
+    const comments = await fetchComments();
+    this.setState({ comments });
   }
 
-  fetchTargetsData = async (sheetId) => {
-    const response = await fetch(`/api/targets-data/${sheetId}`);
-    const body = await response.json();
-    if (response.status !== 200) throw Error(body.message);
-    return body;
-  };
+  componentDidUpdate = () => {
+    console.log('STATE', this.state);
+  }
 
-  updateTargetData = async targetData => {
-    const response = await fetch(`/api/targets-data/${this.props.match.params.sheetId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ targetData }),
-    });
-    const body = await response.json();
-    console.log('body', body);
-  };
+  computeTargetsMetadata = () => {
+    const { targets, probes } = this.state;
 
-  computeTargetsMetadata = targetsData => {
-    const targetsTableHeaders = targetsData.reduce((acc1, { id, probes }) => ({
-      ...acc1,
-      [id]: probes.reduce((acc2, { type }) => {
-        if (acc2.length && acc2[acc2.length - 1].type === type) {
-          acc2[acc2.length - 1].span++;
-        } else {
-          acc2.push({ type, span: 1 });
-        }
-        return acc2;
-      }, []),
-    }), {});
+    const targetsTableHeaders = targets.reduce((acc1, { id }) => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === id);
+
+      return {
+        ...acc1,
+        [id]: targetProbes.reduce((acc2, { type }) => {
+          if (acc2.length && acc2[acc2.length - 1].type === type) {
+            acc2[acc2.length - 1].span++;
+          } else {
+            acc2.push({ type, span: 1 });
+          }
+          return acc2;
+        }, []),
+      };
+    }, {});
 
     // TODO: refactor targetsCellStreaks logic 
     let tmp = [];
-    const targetsCellStreaks = targetsData.reduce((acc, { id, probes }) => ({
-      ...acc,
-      [id]: probes.map(({ type, response }, i) => {
-        let count = response ? 1 : 0;
-        if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
-          if (i > 0 && probes[i - 1].type === type && probes[i - 1].response === true) {
-            count = tmp[i - 1];
-          } else {
-            while (probes[i + count] && probes[i + count].type === type && probes[i + count].response === true) {
-              count = count + 1;
+    const targetsCellStreaks = targets.reduce((acc, { id }) => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === id);
+      
+      return {
+        ...acc,
+        [id]: targetProbes.map(({ type, response }, i) => {
+          let count = response ? 1 : 0;
+          if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
+            if (i > 0 && targetProbes[i - 1].type === type && targetProbes[i - 1].response === true) {
+              count = tmp[i - 1];
+            } else {
+              while (targetProbes[i + count] && targetProbes[i + count].type === type && targetProbes[i + count].response === true) {
+                count = count + 1;
+              }
             }
           }
-        }
 
-        if (i === 0) {
-          tmp = [count];
-        } else {
-          tmp.push(count);
-        }
-        
-        return count;
-      }),
-    }), {});
+          if (i === 0) {
+            tmp = [count];
+          } else {
+            tmp.push(count);
+          }
+          
+          return count;
+        }),
+      };
+    }, {});
 
     // toggle isArchived automatically
-    const newTargetsData = targetsData.map(targetData => {
-      if (targetData.probes.length) {
-        const lastProbe = targetData.probes[targetData.probes.length - 1];
+    const newTargets = targets.map(target => {
+      const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
 
-        targetData.isArchived = (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true);
+      if (targetProbes && targetProbes.length) {
+        const lastProbe = targetProbes[targetProbes.length - 1];
+
+        target.isArchived = (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true);
       }
-      return targetData;
+      return target;
     });
 
     this.setState({
-      targetsData: newTargetsData,
+      targets: newTargets,
       targetsTableHeaders,
       targetsCellStreaks,
     });
   }
 
-  getNextProbeDraft = (targetData, targetCellStreaks) => {
-    const guessNextProbeType = ({ baselineProbesNumber, dailyProbesStreak, probes }, targetCellStreaks) => {
+  getNextProbeDraft = (target, probes, targetCellStreaks) => {
+    const guessNextProbeType = ({ baselineProbesNumber, dailyProbesStreak }, probes, targetCellStreaks) => {
       if (probes.length === 0 || probes.length < baselineProbesNumber) {
         return PROBE_TYPE.BASELINE;
       }
@@ -329,49 +338,72 @@ class DataSheet extends Component {
     };
 
     return {
-      type: guessNextProbeType(targetData, targetCellStreaks),
+      type: guessNextProbeType(target, probes, targetCellStreaks),
       date: (new Date()).toISOString().slice(5, 10).split('-').reverse().join('/'),
-      therapist: currentUser.name,
+      therapist: this.state.currentUser.name,
       response: true,
       comment: '',
     };
   };
 
-  onOpenAddNewProbe = targetDataId => this.setState({
+  onOpenAddNewProbe = selectedTargetId => this.setState({
       isAddingProbe: true,
-      addingProbeToTargetDataId: targetDataId,
+      addingProbeToTargetId: selectedTargetId,
       probeDraft: this.getNextProbeDraft(
-        this.state.targetsData.find(({ id }) => id === targetDataId),
-        this.state.targetsCellStreaks[targetDataId],
+        this.state.targets.find(({ id }) => id === selectedTargetId),
+        this.state.probes.filter(({ targetId }) => targetId === selectedTargetId),
+        this.state.targetsCellStreaks[selectedTargetId],
       ),
   });
 
-  onConfirmAddNewProbe = (probeDraft, targetsData, currentTargetId) => {
-    let newTargetsData = clone(targetsData);
+  onConfirmAddNewProbe = async (probeDraft, probes, targets, currentTargetId) => {
     // TODO fix this & hit api
-    let nextCommentId = null;
-    const targetDataIndex = newTargetsData.findIndex(({ id }) => id === currentTargetId);
+    // let nextCommentId = null;
+    // const targetIndex = targets.findIndex(({ id }) => id === currentTargetId);
+    // if (!isNil(probeDraft.comment) && !isEmpty(probeDraft.comment)) {
+    //   nextCommentId = targets[targetIndex].comments.reduce((acc, { id }) => id >= acc ? id + 1 : acc, 1);
+    //   // targets[targetIndex].comments.push({
+    //   //   id: nextCommentId,
+    //   //   text: probeDraft.comment
+    //   // });
+    // }
 
-    if (!isNil(probeDraft.comment) && !isEmpty(probeDraft.comment)) {
-      nextCommentId = newTargetsData[targetDataIndex].comments.reduce((acc, { id }) => id >= acc ? id + 1 : acc, 1);
-      newTargetsData[targetDataIndex].comments.push({
-        id: nextCommentId,
-        text: probeDraft.comment
-      });
-    }
+    // probes.filter(({ targetId }) => targetId === targets[targetIndex].id).push({
+    //   ...pick(['type', 'date', 'therapist', 'response'], probeDraft),
+    //   ...nextCommentId ? { commentId: nextCommentId } : {},
+    // });
 
-    newTargetsData[targetDataIndex].probes.push({
-      ...pick(['type', 'date', 'therapist', 'response'], probeDraft),
-      ...nextCommentId ? { commentId: nextCommentId } : {},
+    // this.setState({
+    //   // target || comments
+    //   probes,
+    //   isAddingProbe: false,
+    // });
+
+    // updateTarget(targets[targetIndex]);
+    // this.computeTargetsMetadata();
+
+    console.log('sending probe', {
+      ...probeDraft, // type, date, therapist, response, comment
+      ownerId: 1, // TODO
+      therapistId: 1, // TODO
+      targetId: currentTargetId, // TODO
     });
+    const newProbe = await createProbe({
+      ...probeDraft, // type, date, therapist, response, comment
+      ownerId: 1, // TODO
+      therapistId: 1, // TODO
+      targetId: currentTargetId, // TODO
+    });
+    console.log('newProbe', newProbe);
 
     this.setState({
-      targetsData: newTargetsData,
+      probes: [
+        ...this.state.probes,
+        newProbe,
+      ],
       isAddingProbe: false,
     });
-
-    this.updateTargetData(newTargetsData[targetDataIndex]);
-    this.computeTargetsMetadata(newTargetsData);
+    this.computeTargetsMetadata();
   };
 
   onCancelAddNewProbe = () => {
@@ -382,55 +414,53 @@ class DataSheet extends Component {
 
   onAddNewTarget = async () => {
     const { targetDraft } = this.state;
-
-    const response = await fetch(`/api/targets-data/1`, { //userId
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sheetId: this.props.match.params.sheetId,
-        targetData: targetDraft,
-      }),
+    const newTarget = await createTarget({
+      ...targetDraft,
+      name: targetDraft.target,
+      creationDate: Date.now(),
+      ownerId: 1, // TODO
+      sheetId: this.props.match.params.sheetId,
     });
-
-    const newTargetData = await response.json();
-    const newTargetsData = concat(this.state.targetsData, [newTargetData]);
+    console.log('newTarget', newTarget);
+    
+    const newTargets = concat(this.state.targets, [newTarget]);
     this.setState({
-      targetsData: newTargetsData,
+      targets: newTargets,
       isAddingTarget: false,
     });
-    this.computeTargetsMetadata(newTargetsData);
+    this.computeTargetsMetadata();
   };
 
   onUnarchiveTarget = targetId => this.setState({
-    targetsData: set(
+    targets: set(
       lensPath([
-        this.state.targetsData.findIndex(({ id }) => id === targetId),
+        this.state.targets.findIndex(({ id }) => id === targetId),
         'isArchived',
       ]),
       false,
-      this.state.targetsData,
+      this.state.targets,
     ),
   });
 
   render() {
-    const { targetsData, isAddingTarget, targetDraft, isAddingProbe, addingProbeToTargetDataId, probeDraft, targetsTableHeaders, targetsCellStreaks } = this.state;
+    const { targets, probes, isAddingTarget, targetDraft, isAddingProbe, addingProbeToTargetId, probeDraft, targetsTableHeaders, targetsCellStreaks, users } = this.state;
     
     return (
       <Fragment>
-        {targetsData.filter(({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived).map(targetData => (
+        {targets.filter(({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived).map(target => (
           <TargetBlock
-            key={targetData.id}
-            targetData={targetData}
-            targetTableHeaders={targetsTableHeaders[targetData.id]}
-            targetCellStreaks={targetsCellStreaks[targetData.id]}
-            isAddingProbe={isAddingProbe && addingProbeToTargetDataId === targetData.id}
+            key={target.id}
+            target={target}
+            targetTableHeaders={targetsTableHeaders[target.id]}
+            targetCellStreaks={targetsCellStreaks[target.id]}
+            probes={probes.filter(({ targetId }) => targetId === target.id)}
+            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
             probeDraft={probeDraft}
             onProbeDraftUpdate={(fieldName, value) => this.setState({ probeDraft: { ...probeDraft, [fieldName]: value } })}
-            onOpenAddNewProbe={() => this.onOpenAddNewProbe(targetData.id)}
-            onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, targetsData, targetData.id)}
+            onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+            onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, probes.filter(({ targetId }) => targetId === target.id), targets, target.id)}
             onCancelAddNewProbe={this.onCancelAddNewProbe}
+            users={users}
           />
         ))}
         <br />
@@ -454,20 +484,22 @@ class DataSheet extends Component {
 
         <SeparatorView />
 
-        {targetsData.filter(({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived).map((targetData) => (
+        {targets.filter(({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived).map((target) => (
           <TargetBlock
-            key={targetData.id}
-            targetData={targetData}
-            targetTableHeaders={targetsTableHeaders[targetData.id]}
-            targetCellStreaks={targetsCellStreaks[targetData.id]}
-            isAddingProbe={isAddingProbe && addingProbeToTargetDataId === targetData.id}
+            key={target.id}
+            target={target}
+            targetTableHeaders={targetsTableHeaders[target.id]}
+            targetCellStreaks={targetsCellStreaks[target.id]}
+            probes={probes.filter(({ targetId }) => targetId === target.id)}
+            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
             probeDraft={probeDraft}
             onProbeDraftUpdate={(fieldName, value) => this.setState({ probeDraft: { ...probeDraft, [fieldName]: value } })}
-            onOpenAddNewProbe={() => this.onOpenAddNewProbe(targetData.id)}
-            onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, targetsData, targetData.id)}
-            onCancelAddNewProbe={this.onCancelAddNewProbe}
+            // onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+            // onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, probes.filter(({ targetId }) => targetId === target.id), targets, target.id)}
+            // onCancelAddNewProbe={this.onCancelAddNewProbe}
             isArchived
-            onUnarchive={() => this.onUnarchiveTarget(targetData.id)}
+            onUnarchive={() => this.onUnarchiveTarget(target.id)}
+            users={users}
           />
         ))}
 
