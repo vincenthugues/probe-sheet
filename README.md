@@ -30,6 +30,7 @@ share with parents
 plug in search
 offline mode
 https
+node-rate-limiter-flexible
 
 table recap target (debut, fin quand termine, "baseline"?), skills tracking sheet
 -> graphe cumulatif (nb cibles retenues dans la semaine)

@@ -39,7 +39,7 @@ app.use('/comments', commentsRouter);
 
 // error handling middleware should be loaded after the loading the routes
 if (app.get('env') === 'development') {
-  app.use(errorHandler())
+  app.use(errorHandler());
 }
 
 const seedDatabase = async () => {
@@ -64,8 +64,8 @@ const seedDatabase = async () => {
       ],
     },
     {
-      include: [ models.Sheet ],
-    }
+      include: [models.Sheet],
+    },
   );
 };
 
