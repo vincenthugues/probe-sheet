@@ -631,6 +631,13 @@ class DataSheet extends Component {
 
     return (
       <Fragment>
+        {/* <h2>Daily probe data sheet</h2> */}
+        <h2>Feuille de cotation quotidienne</h2>
+        <div style={{ fontSize: '1rem' }}>
+          <div>Elève : J.D.</div>
+          <div>Domaine de compétence : language réceptif</div>
+        </div>
+
         {targets.filter(
           ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
         ).map(target => (
