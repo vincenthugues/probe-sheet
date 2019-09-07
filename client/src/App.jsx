@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
-import { concat, isEmpty } from 'ramda';
+import { isEmpty } from 'ramda';
 import styled from 'styled-components';
 
 import {
@@ -59,16 +59,14 @@ const NewSheetBlockView = styled.div`
 `;
 const NewSheetBlock = ({ sheetDraft: { student, skillDomain }, onFieldUpdate, children }) => (
   <NewSheetBlockView>
-    <div>
-Elève
-      {' '}
-      <input value={student} onChange={({ target: { value } }) => onFieldUpdate('student', value)} />
-    </div>
-    <div>
-Domaine
-      {' '}
-      <input value={skillDomain} onChange={({ target: { value } }) => onFieldUpdate('skillDomain', value)} />
-    </div>
+    <label htmlFor="student">
+      Elève
+      <input id="student" value={student} onChange={({ target: { value } }) => onFieldUpdate('student', value)} />
+    </label>
+    <label htmlFor="skillDomain">
+      Domaine
+      <input id="skillDomain" value={skillDomain} onChange={({ target: { value } }) => onFieldUpdate('skillDomain', value)} />
+    </label>
     {children}
   </NewSheetBlockView>
 );
@@ -97,19 +95,15 @@ class Index extends Component {
   }
 
   onConfirmAddNewSheet = async () => {
-    const { sheetDraft } = this.state;
+    const { sheetDraft, sheets } = this.state;
 
-    const newSheet = await createSheet({
-      ...sheetDraft,
-      creationDate: Date.now(),
-      lastUpdateDate: Date.now(),
-      ownerId: USER_ID, // TODO
-    });
+    const newSheet = await createSheet(sheetDraft);
 
-    this.setState(state => ({
-      sheets: concat(state.sheets, [newSheet]),
+    this.setState({
+      sheets: [...sheets, newSheet],
+      sheetDraft: {},
       isAddingSheet: false,
-    }));
+    });
   }
 
   render() {
@@ -117,7 +111,11 @@ class Index extends Component {
 
     return (
       <div style={{
-        display: 'flex', flex: '1 0 auto', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', padding: '10px',
+        display: 'flex',
+        flex: '1 0 auto',
+        flexFlow: 'row wrap',
+        justifyContent: 'space-around',
+        padding: '10px',
       }}
       >
         {sheets.map(({ id, student, skillDomain }) => (

@@ -1,7 +1,12 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { isEmpty, lensPath, set } from 'ramda';
+import {
+  isEmpty,
+  lensPath,
+  set,
+  update,
+} from 'ramda';
 // import C3Chart from 'react-c3js';
 
 import {
@@ -15,6 +20,12 @@ const PROBE_TYPE = {
   BASELINE: 'Baseline',
   DAILY: 'Daily',
   RETENTION: 'Retention',
+};
+
+const PROBE_TABLE_HEADER_BY_TYPE = {
+  [PROBE_TYPE.BASELINE]: 'Ligne de base',
+  [PROBE_TYPE.DAILY]: 'Probes',
+  [PROBE_TYPE.RETENTION]: 'Probe de rétention',
 };
 
 const INITIAL_STATE = {
@@ -71,37 +82,33 @@ const NewProbeBlock = ({
 }) => (
   <NewProbeBlockView>
     <div>
-Type
-      {' '}
+      Type
       <select value={type} onChange={({ target: { value } }) => onFieldUpdate('type', value)}>
         <option value={PROBE_TYPE.BASELINE}>Ligne de base</option>
         <option value={PROBE_TYPE.DAILY}>Probe</option>
         <option value={PROBE_TYPE.RETENTION}>Probe de rétention</option>
       </select>
-
     </div>
+    <label htmlFor="date">
+      Date
+      <input id="date" type="date" value={date} onChange={({ target: { value } }) => onFieldUpdate('date', value.toString())} />
+    </label>
     <div>
-Date
-      {' '}
-      <input value={date} onChange={({ target: { value } }) => onFieldUpdate('date', value)} />
-    </div>
-    <div>
-Thérapeute
+      Thérapeute
       <input value={therapist} onChange={({ target: { value } }) => onFieldUpdate('therapist', value)} />
     </div>
     <div>
-Réponse
-      {' '}
+      Réponse
       <select value={response} onChange={({ target: { value } }) => onFieldUpdate('response', value === 'true')}>
         <option value>Oui</option>
         <option value={false}>Non</option>
       </select>
-
     </div>
     <br />
-    Commentaires/Notes
-    {' '}
-    <textarea value={comment} onChange={({ target: { value } }) => onFieldUpdate('comment', value)} />
+    <label htmlFor="comment">
+      Commentaires/Notes
+      <textarea id="comment" value={comment} onChange={({ target: { value } }) => onFieldUpdate('comment', value)} />
+    </label>
     <br />
     {children}
   </NewProbeBlockView>
@@ -205,7 +212,7 @@ const AddTargetButtonView = styled.button`
 `;
 
 const ProbeTd = ({
-  type, response, count, commentId, comments, dailyProbesStreak,
+  type, response, count, /* commentId, comments, */ dailyProbesStreak,
 }) => {
   const getBackgroundColor = () => {
     if (!response) return 'none';
@@ -219,18 +226,18 @@ const ProbeTd = ({
 
     return 'none';
   };
-  const commentText = commentId && comments.find(({ id }) => id === commentId).text;
+  // const commentText = commentId && comments.find(({ id }) => id === commentId).text;
 
   return (
     <Td style={{ backgroundColor: getBackgroundColor() }}>
       {response ? 'Oui' : 'Non'}
-      {commentText && (
-      <sup title={commentText}>
-[
-        {commentId}
-]
-      </sup>
-      )}
+      {/* {commentText && (
+        <sup title={commentText}>
+          [
+            {commentId}
+          ]
+        </sup>
+      )} */}
     </Td>
   );
 };
@@ -238,23 +245,23 @@ ProbeTd.propTypes = {
   type: PropTypes.string.isRequired,
   response: PropTypes.bool.isRequired,
   count: PropTypes.number.isRequired,
-  commentId: PropTypes.number.isRequired,
-  comments: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    text: PropTypes.string.isRequired,
-  })).isRequired,
+  // commentId: PropTypes.number.isRequired,
+  // comments: PropTypes.arrayOf(PropTypes.shape({
+  //   id: PropTypes.number.isRequired,
+  //   text: PropTypes.string.isRequired,
+  // })).isRequired,
   dailyProbesStreak: PropTypes.number.isRequired,
 };
 
 const TargetBlock = ({
   target: {
     name,
-    comments = [],
     dailyProbesStreak,
   },
+  // comments = [],
   probes,
-  targetTableHeaders,
-  targetCellStreaks,
+  targetTableHeaders = [],
+  targetCellStreaks = [],
   isAddingProbe,
   probeDraft,
   onProbeDraftUpdate,
@@ -263,22 +270,21 @@ const TargetBlock = ({
   onCancelAddNewProbe,
   isArchived = false,
   onUnarchive,
-  users,
 }) => (
-  <TargetView style={{ color: !isArchived ? '#000000' : '#B0B0B0' }}>
+  <TargetView style={{ color: isArchived ? '#B0B0B0' : '#000000' }}>
     <h3>{name}</h3>
     <TableBlock>
       <Table>
         <thead>
           <tr>
-            <Th style={{ border: '20px' }} />
+            <Th style={{ border: 0 }} />
             {targetTableHeaders.map(({ type, span }, idx) => (
-              <Th key={idx} colSpan={span} title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}>
-                {{
-                  [PROBE_TYPE.BASELINE]: 'Ligne de base',
-                  [PROBE_TYPE.DAILY]: 'Probes',
-                  [PROBE_TYPE.RETENTION]: 'Probe de rétention',
-                }[type]}
+              <Th
+                key={idx}
+                colSpan={span}
+                title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}
+              >
+                {PROBE_TABLE_HEADER_BY_TYPE[type]}
               </Th>
             ))}
           </tr>
@@ -294,9 +300,9 @@ const TargetBlock = ({
           </tr>
           <tr>
             <Th>Thérapeute</Th>
-            {probes.map(({ id: probeId, therapistId }) => (
+            {probes.map(({ id: probeId, therapist }) => (
               <Td key={probeId}>
-                {users.find(({ id }) => id === therapistId).name}
+                {therapist}
               </Td>
             ))}
           </tr>
@@ -304,14 +310,14 @@ const TargetBlock = ({
             <Th>Réponse</Th>
             {probes.map(({
               id: probeId, type, response, commentId,
-            }, k) => (
+            }, idx) => (
               <ProbeTd
                 key={probeId}
                 type={type}
                 response={response}
-                count={targetCellStreaks[k]}
+                count={targetCellStreaks[idx]}
                 commentId={commentId}
-                comments={comments}
+                // comments={comments}
                 dailyProbesStreak={dailyProbesStreak}
               />
             ))}
@@ -337,15 +343,11 @@ const TargetBlock = ({
       )}
     </TableBlock>
     <CommentsView>
-      {comments.map(({ id, text }) => (
+      {/* {comments.map(({ id, text }) => (
         <div key={id}>
-[
-          {id}
-]
-          {' '}
-          {text}
+          {`[${id}] ${text}`}
         </div>
-      ))}
+      ))} */}
     </CommentsView>
   </TargetView>
 );
@@ -353,24 +355,55 @@ TargetBlock.propTypes = {
   target: PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
-    comments: PropTypes.array.isRequired,
     dailyProbesStreak: PropTypes.number.isRequired,
   }).isRequired,
-  probes: PropTypes.arrayOf().isRequired,
-  targetTableHeaders: PropTypes.arrayOf().isRequired,
-  targetCellStreaks: PropTypes.arrayOf().isRequired,
+  // comments: PropTypes.arrayOf(
+  //   PropTypes.shape({
+  //     id: PropTypes.number.isRequired,
+  //     text: PropTypes.string.isRequired,
+  //   }),
+  // ).isRequired,
+  probes: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      type: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
+  targetTableHeaders: PropTypes.arrayOf(
+    PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      span: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
+  targetCellStreaks: PropTypes.arrayOf(
+    PropTypes.shape({
+      type: PropTypes.string.isRequired,
+      span: PropTypes.number.isRequired,
+    }),
+  ).isRequired,
   isAddingProbe: PropTypes.bool.isRequired,
-  probeDraft: PropTypes.objectOf().isRequired,
+  probeDraft: PropTypes.shape({
+    type: PropTypes.string,
+    date: PropTypes.string,
+    therapist: PropTypes.string,
+    response: PropTypes.bool,
+    comment: PropTypes.string,
+  }).isRequired,
   onProbeDraftUpdate: PropTypes.func.isRequired,
   onOpenAddNewProbe: PropTypes.func.isRequired,
   onConfirmAddNewProbe: PropTypes.func.isRequired,
   onCancelAddNewProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
-  onUnarchive: PropTypes.func.isRequired,
-  users: PropTypes.arrayOf().isRequired,
+  onUnarchive: PropTypes.func,
+  users: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    username: PropTypes.string.isRequired,
+    email: PropTypes.string.isRequired,
+  })).isRequired,
 };
 TargetBlock.defaultProps = {
   isArchived: false,
+  onUnarchive: null,
 };
 
 class DataSheet extends Component {
@@ -384,18 +417,16 @@ class DataSheet extends Component {
     const sheetId = Number(match.params.sheetId);
 
     const users = await fetchUsers();
-    this.setState({ users });
-
     const targets = await fetchTargets(sheetId);
-    this.setState({ targets });
-
-    for (const { id } of targets) {
-      const probes = await fetchProbes(id);
-      this.setState({ probes });
-    }
-
+    const probes = await fetchProbes();
     const comments = await fetchComments();
-    this.setState({ comments });
+
+    this.setState({
+      users,
+      targets,
+      probes,
+      comments,
+    });
 
     this.computeTargetsMetadata();
   }
@@ -415,8 +446,6 @@ class DataSheet extends Component {
   onConfirmAddNewProbe = async (probeDraft, currentTargetId) => {
     const newProbe = await createProbe({
       ...probeDraft, // type, date, therapist, response, comment
-      ownerId: 1, // TODO
-      therapistId: 1, // TODO
       targetId: currentTargetId, // TODO
     });
 
@@ -496,9 +525,7 @@ class DataSheet extends Component {
 
     return {
       type: guessNextProbeType(target),
-      date: (new Date()).toISOString().slice(5, 10).split('-')
-        .reverse()
-        .join('/'),
+      date: '', // (new Date()).toISOString().slice(5, 10).split('-').reverse().join('/'),
       therapist: currentUser.name,
       response: true,
       comment: '',
@@ -515,47 +542,53 @@ class DataSheet extends Component {
       return {
         ...acc1,
         [id]: targetProbes.reduce((acc2, { type }) => {
-          if (acc2.length && acc2[acc2.length - 1].type === type) {
-            return set([acc2.length - 1, 'span'], acc2[acc2.length - 1].span + 1, acc2);
+          const lastItemIndex = acc2.length - 1;
+          const lastItem = lastItemIndex >= 0 ? acc2[lastItemIndex] : null;
+          if (lastItem && lastItem.type === type) {
+            return update(
+              lastItemIndex,
+              {
+                ...acc2[lastItemIndex],
+                span: lastItem.span + 1,
+              },
+              acc2,
+            );
           }
-          return acc2.push({ type, span: 1 });
+          return [...acc2, { type, span: 1 }];
         }, []),
       };
     }, {});
 
     // TODO: refactor targetsCellStreaks logic
-    let tmp = [];
+    let counters = [];
     const targetsCellStreaks = targets.reduce((acc, { id }) => {
       const targetProbes = probes.filter(({ targetId }) => targetId === id);
 
       return {
         ...acc,
         [id]: targetProbes.map(({ type, response }, i) => {
-          let count = response ? 1 : 0;
+          let counter = response ? 1 : 0;
           if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
             if (
-              i > 0 && targetProbes[i - 1].type === type
+              i > 0
+              && targetProbes[i - 1].type === type
               && targetProbes[i - 1].response === true
             ) {
-              count = tmp[i - 1];
+              counter = counters[i - 1];
             } else {
               while (
-                targetProbes[i + count]
-                && targetProbes[i + count].type === type
-                && targetProbes[i + count].response === true
+                targetProbes[i + counter]
+                && targetProbes[i + counter].type === type
+                && targetProbes[i + counter].response === true
               ) {
-                count += 1;
+                counter += 1;
               }
             }
           }
 
-          if (i === 0) {
-            tmp = [count];
-          } else {
-            tmp.push(count);
-          }
+          counters = [...counters, counter];
 
-          return count;
+          return counter;
         }),
       };
     }, {});

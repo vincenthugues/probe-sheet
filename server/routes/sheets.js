@@ -15,6 +15,7 @@ router.get('/:sheetId', async (req, res) => {
 router.post('/', async (req, res) => {
   const sheet = await req.context.models.Sheet.create({
     student: req.body.student,
+    skillDomain: req.body.skillDomain,
     ownerId: req.context.user.id,
   });
 

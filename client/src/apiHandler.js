@@ -62,9 +62,13 @@ export const fetchSheets = async () => {
 
 export const createSheet = async (draft) => {
   try {
+    console.log('draft', draft);
     const { data: sheet } = await axios.post(
       `${SERVER_URL}/sheets`,
-      draft,
+      pick([
+        'student',
+        'skillDomain',
+      ], draft),
     );
 
     return sheet;
@@ -144,7 +148,7 @@ export const createProbe = async (draft) => {
       `${SERVER_URL}/probes`,
       pick([
         'ownerId',
-        'therapistId',
+        'therapist',
         'targetId',
         'type',
         'date',
