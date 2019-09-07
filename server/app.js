@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import 'dotenv/config';
 
 import models, { sequelize } from './models';
+import mockData from './models/mockData';
 import indexRouter from './routes/index';
 import usersRouter from './routes/users';
 import sheetsRouter from './routes/sheets';
@@ -33,7 +34,8 @@ app.use(async (req, res, next) => {
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.get('/session', (req, res) => res.send(models.users[req.context.user.id]));
+// app.get('/session', (req, res) => res.send(models.users[req.context.user.id]));
+app.get('/session', async (req, res) => res.send(await req.context.models.User.findByPk(req.context.user.id)));
 app.use('/sheets', sheetsRouter);
 app.use('/targets', targetsRouter);
 app.use('/probes', probesRouter);
@@ -50,25 +52,16 @@ const seedDatabase = async () => {
       username: 'John Doe',
       email: 'john.doe@example.com',
       password: 'abc123',
-      sheets: [
-        {
-          student: 'Student A',
-          skillDomain: 'Skill 1',
-        },
-        {
-          student: 'Student A',
-          skillDomain: 'Skill 2',
-        },
-        {
-          student: 'Student B',
-          skillDomain: 'Skill 1',
-        },
-      ],
+      sheets: mockData.sheets,
     },
     {
       include: [models.Sheet],
     },
   );
+
+  await models.Target.bulkCreate(mockData.targets);
+  await models.Probe.bulkCreate(mockData.probes);
+  // await models.Probe.bulkCreate(mockData.comments);
 };
 
 sequelize.sync({ force: process.env.ERASE_DB_ON_SYNC }).then(() => {

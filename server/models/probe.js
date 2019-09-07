@@ -3,10 +3,11 @@ const probe = (sequelize, DataTypes) => {
     type: DataTypes.STRING,
     date: DataTypes.DATE,
     response: DataTypes.BOOLEAN,
+    therapist: DataTypes.STRING,
   });
 
   Probe.associate = (models) => {
-    Probe.belongsTo(models.User, { as: 'therapist' });
+    Probe.belongsTo(models.User, { as: 'owner' });
     Probe.belongsTo(models.Target);
     Probe.hasOne(models.Comment);
   };

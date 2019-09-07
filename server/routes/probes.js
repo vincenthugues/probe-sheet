@@ -8,14 +8,25 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const probe = await req.context.models.Probe.create({
-    date: req.body.date,
-    type: req.body.type,
-    response: req.body.response,
-    therapistId: req.context.user.id,
-    targetId: req.body.targetId,
-  });
+  try {
+    const probe = await req.context.models.Probe.create({
+      type: req.body.type,
+      date: req.body.date,
+      response: req.body.response,
+      therapist: req.body.therapist,
+      ownerId: req.context.user.id,
+      targetId: req.body.targetId,
+    });
 
+    return res.send(probe);
+  } catch (err) {
+    console.log('Error while creating probe:', err);
+    return res.send(err);
+  }
+});
+
+router.get('/:probeId', async (req, res) => {
+  const probe = await req.context.models.Probe.findByPk(req.params.probeId);
   return res.send(probe);
 });
 

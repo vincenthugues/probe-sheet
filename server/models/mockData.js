@@ -9,10 +9,9 @@ const PROBE_TYPE = {
 
 const users = [
   {
-    id: 1,
     email: 'test@email.com',
     password: '123',
-    name: 'Therapist1',
+    username: 'Jane Doe',
   },
 ];
 
@@ -25,7 +24,6 @@ const users = [
 
 const sheets = [
   {
-    id: 1,
     ownerId: 1,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
@@ -33,7 +31,6 @@ const sheets = [
     skillDomain: 'Language réceptif',
   },
   {
-    id: 2,
     ownerId: 1,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
@@ -41,7 +38,6 @@ const sheets = [
     skillDomain: 'Language réceptif',
   },
   {
-    id: 3,
     ownerId: 1,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
@@ -60,7 +56,6 @@ const sheets = [
 
 const targets = [
   {
-    id: 1,
     ownerId: 1,
     name: 'Cible 1',
     creationDate: new Date(),
@@ -69,7 +64,6 @@ const targets = [
     sheetId: 1,
   },
   {
-    id: 2,
     ownerId: 1,
     name: 'Cible 2',
     creationDate: new Date(),
@@ -84,16 +78,15 @@ const targets = [
 // type
 // date
 // response
+// therapist
 // comment
 // // ownerId (User)
-// // therapistId (User)
 // // targetId (Target)
 
 const probes = [
   {
-    id: 1,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
     type: PROBE_TYPE.BASELINE,
@@ -102,9 +95,8 @@ const probes = [
     comment: null,
   },
   {
-    id: 2,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
     type: PROBE_TYPE.BASELINE,
@@ -113,9 +105,8 @@ const probes = [
     comment: null,
   },
   {
-    id: 3,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
     type: PROBE_TYPE.BASELINE,
@@ -124,9 +115,8 @@ const probes = [
     comment: null,
   },
   {
-    id: 4,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
     type: PROBE_TYPE.DAILY,
@@ -135,9 +125,8 @@ const probes = [
     comment: null,
   },
   {
-    id: 5,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
     type: PROBE_TYPE.DAILY,
@@ -146,9 +135,8 @@ const probes = [
     comment: null,
   },
   {
-    id: 6,
     ownerId: 1,
-    therapistId: 1,
+    therapist: 'John Doe',
     targetId: 2,
     creationDate: new Date(),
     type: PROBE_TYPE.BASELINE,
@@ -166,7 +154,6 @@ const probes = [
 
 const comments = [
   {
-    id: 1,
     text: 'Test comment',
     creationDate: new Date(),
     probeId: 1,
