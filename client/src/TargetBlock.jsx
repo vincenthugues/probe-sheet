@@ -138,7 +138,7 @@ const NewProbeBlock = ({
     </div>
     <br />
     <label htmlFor="comment">
-      Commentaires/Notes
+      Commentaire/Notes
       <textarea id="comment" value={comment} onChange={({ target: { value } }) => onFieldUpdate('comment', value)} />
     </label>
     <br />
@@ -184,7 +184,7 @@ const TargetBlock = ({
             <Th style={{ border: 0 }} />
             {targetTableHeaders.map(({ type, span }, idx) => (
               <Th
-                  // eslint-disable-next-line react/no-array-index-key
+                // eslint-disable-next-line react/no-array-index-key
                 key={idx}
                 colSpan={span}
                 title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}
@@ -221,7 +221,7 @@ const TargetBlock = ({
                 type={type}
                 response={response}
                 count={targetCellStreaks[idx]}
-                commentId={prop('id', comments.find(probe => probe.id === probeId))}
+                commentId={prop('id', comments.find(comment => comment.probeId === probeId))}
                 comments={comments}
                 dailyProbesStreak={dailyProbesStreak}
               />

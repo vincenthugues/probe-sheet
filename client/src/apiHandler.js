@@ -153,7 +153,6 @@ export const createProbe = async (draft) => {
         'type',
         'date',
         'response',
-        'comment',
       ], draft),
     );
 
@@ -175,6 +174,23 @@ export const fetchComments = async () => {
     return comments;
   } catch (err) {
     console.error('error fetching comments', err);
+    throw err;
+  }
+};
+
+export const createComment = async (text, probeId) => {
+  try {
+    const { data: comment } = await axios.post(
+      `${SERVER_URL}/comments`,
+      {
+        text,
+        probeId,
+      },
+    );
+
+    return comment;
+  } catch (err) {
+    console.error('error creating comment', err);
     throw err;
   }
 };

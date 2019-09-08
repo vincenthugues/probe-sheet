@@ -9,7 +9,6 @@ const probe = (sequelize, DataTypes) => {
   Probe.associate = (models) => {
     Probe.belongsTo(models.User, { as: 'owner' });
     Probe.belongsTo(models.Target);
-    Probe.hasOne(models.Comment);
   };
 
   return Probe;

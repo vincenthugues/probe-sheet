@@ -10,7 +10,7 @@ import {
 // import C3Chart from 'react-c3js';
 
 import {
-  fetchTargets, createTarget, fetchProbes, createProbe, fetchComments,
+  fetchTargets, createTarget, fetchProbes, createProbe, fetchComments, createComment,
 } from './apiHandler';
 import { DEFAULT_BASELINE_PROBES, DEFAULT_DAILY_PROBES_STREAK, PROBE_TYPE } from './constants';
 import TargetBlock from './TargetBlock';
@@ -45,6 +45,7 @@ const NewTargetBlockView = styled.div`
   width: 20em;
   border: 1px dashed;
 `;
+
 const NewTargetBlock = ({
   targetDraft: { target, baselineProbesNumber, dailyProbesStreak },
   onFieldUpdate,
@@ -131,6 +132,15 @@ class DataSheet extends Component {
       ...probeDraft, // type, date, therapist, response, comment
       targetId: currentTargetId, // TODO
     });
+    if (probeDraft.comment) {
+      const newComment = await createComment(probeDraft.comment, newProbe.id);
+      this.setState(state => ({
+        comments: [
+          ...state.comments,
+          newComment,
+        ],
+      }));
+    }
 
     this.setState(state => ({
       probes: [
