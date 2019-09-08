@@ -9,22 +9,21 @@ weekly cumulative graph for retention (add week's total and add new point), w/ c
 
 ## TODO
 toggle isArchived?
-set up local test db
-save in db
 local storage?
 sign up
 log in
 set up db (aws? elephantsql?)
-probe proper date input, not string
+logging
 allow pdf export/print display?
-fix rest api
+improve rest api
 sort by last updated/last created?
 suggestion after criterium met (retention after daily streak, daily after failed retention)
-comments -> notes?
 ability to add comments/notes to existing probe, and to other therapists' probes as questions?
-publish app online
 accounts (security), auth0? (https://auth0.com/authenticate/react/google/)
+publish app online
+sequential "ids" for each target's comments/notes (local indices)
 tables horizontal scrolling
+collapsible baseline columns after first daily probe
 allow other therapists edition
 share with parents
 plug in search
@@ -33,9 +32,9 @@ offline mode
 https
 node-rate-limiter-flexible
 
-table recap target (debut, fin quand termine, "baseline"?), skills tracking sheet
--> graphe cumulatif (nb cibles retenues dans la semaine)
-demandes PECS
+targets summary table (beginning, end when done, "baseline"?), skills tracking sheet
+-> cumulative graph (nb of targets achieved in the week)
+PECS mands
 
 ## Notes
 on postgres id conflict when inserting a new entry, do:
