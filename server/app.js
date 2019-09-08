@@ -61,7 +61,7 @@ const seedDatabase = async () => {
 
   await models.Target.bulkCreate(mockData.targets);
   await models.Probe.bulkCreate(mockData.probes);
-  // await models.Probe.bulkCreate(mockData.comments);
+  await models.Comment.bulkCreate(mockData.comments);
 };
 
 sequelize.sync({ force: process.env.ERASE_DB_ON_SYNC }).then(() => {

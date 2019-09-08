@@ -148,14 +148,12 @@ const probes = [
 
 // COMMENT
 // text
-// creationDate
 // // probeId (Probe)
 // // authorId (User)
 
 const comments = [
   {
     text: 'Test comment',
-    creationDate: new Date(),
     probeId: 1,
     authorId: 1,
   },

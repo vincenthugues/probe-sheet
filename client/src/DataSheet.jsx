@@ -4,13 +4,14 @@ import styled from 'styled-components';
 import {
   isEmpty,
   lensPath,
+  prop,
   set,
   update,
 } from 'ramda';
 // import C3Chart from 'react-c3js';
 
 import {
-  fetchUsers, fetchTargets, createTarget, fetchProbes, createProbe, fetchComments,
+  fetchTargets, createTarget, fetchProbes, createProbe, fetchComments,
 } from './apiHandler';
 
 const DEFAULT_DAILY_PROBES_STREAK = 3;
@@ -212,7 +213,7 @@ const AddTargetButtonView = styled.button`
 `;
 
 const ProbeTd = ({
-  type, response, count, /* commentId, comments, */ dailyProbesStreak,
+  type, response, count, commentId, comments, dailyProbesStreak,
 }) => {
   const getBackgroundColor = () => {
     if (!response) return 'none';
@@ -226,18 +227,18 @@ const ProbeTd = ({
 
     return 'none';
   };
-  // const commentText = commentId && comments.find(({ id }) => id === commentId).text;
+  const commentText = commentId && comments.find(({ id }) => id === commentId).text;
 
   return (
     <Td style={{ backgroundColor: getBackgroundColor() }}>
       {response ? 'Oui' : 'Non'}
-      {/* {commentText && (
+      {commentText && (
         <sup title={commentText}>
           [
             {commentId}
           ]
         </sup>
-      )} */}
+      )}
     </Td>
   );
 };
@@ -245,12 +246,15 @@ ProbeTd.propTypes = {
   type: PropTypes.string.isRequired,
   response: PropTypes.bool.isRequired,
   count: PropTypes.number.isRequired,
-  // commentId: PropTypes.number.isRequired,
-  // comments: PropTypes.arrayOf(PropTypes.shape({
-  //   id: PropTypes.number.isRequired,
-  //   text: PropTypes.string.isRequired,
-  // })).isRequired,
+  commentId: PropTypes.number,
+  comments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    text: PropTypes.string.isRequired,
+  })).isRequired,
   dailyProbesStreak: PropTypes.number.isRequired,
+};
+ProbeTd.defaultProps = {
+  commentId: null,
 };
 
 const TargetBlock = ({
@@ -258,7 +262,7 @@ const TargetBlock = ({
     name,
     dailyProbesStreak,
   },
-  // comments = [],
+  comments = [],
   probes,
   targetTableHeaders = [],
   targetCellStreaks = [],
@@ -280,6 +284,7 @@ const TargetBlock = ({
             <Th style={{ border: 0 }} />
             {targetTableHeaders.map(({ type, span }, idx) => (
               <Th
+                // eslint-disable-next-line react/no-array-index-key
                 key={idx}
                 colSpan={span}
                 title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}
@@ -309,15 +314,15 @@ const TargetBlock = ({
           <tr>
             <Th>Réponse</Th>
             {probes.map(({
-              id: probeId, type, response, commentId,
+              id: probeId, type, response,
             }, idx) => (
               <ProbeTd
                 key={probeId}
                 type={type}
                 response={response}
                 count={targetCellStreaks[idx]}
-                commentId={commentId}
-                // comments={comments}
+                commentId={prop('id', comments.find(probe => probe.id === probeId))}
+                comments={comments}
                 dailyProbesStreak={dailyProbesStreak}
               />
             ))}
@@ -343,11 +348,11 @@ const TargetBlock = ({
       )}
     </TableBlock>
     <CommentsView>
-      {/* {comments.map(({ id, text }) => (
+      {comments.map(({ id, text }) => (
         <div key={id}>
           {`[${id}] ${text}`}
         </div>
-      ))} */}
+      ))}
     </CommentsView>
   </TargetView>
 );
@@ -357,12 +362,12 @@ TargetBlock.propTypes = {
     name: PropTypes.string.isRequired,
     dailyProbesStreak: PropTypes.number.isRequired,
   }).isRequired,
-  // comments: PropTypes.arrayOf(
-  //   PropTypes.shape({
-  //     id: PropTypes.number.isRequired,
-  //     text: PropTypes.string.isRequired,
-  //   }),
-  // ).isRequired,
+  comments: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      text: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
   probes: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
@@ -395,11 +400,6 @@ TargetBlock.propTypes = {
   onCancelAddNewProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
   onUnarchive: PropTypes.func,
-  users: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    username: PropTypes.string.isRequired,
-    email: PropTypes.string.isRequired,
-  })).isRequired,
 };
 TargetBlock.defaultProps = {
   isArchived: false,
@@ -416,13 +416,11 @@ class DataSheet extends Component {
     const { match } = this.props;
     const sheetId = Number(match.params.sheetId);
 
-    const users = await fetchUsers();
     const targets = await fetchTargets(sheetId);
     const probes = await fetchProbes();
     const comments = await fetchComments();
 
     this.setState({
-      users,
       targets,
       probes,
       comments,
@@ -619,6 +617,7 @@ class DataSheet extends Component {
     const {
       targets,
       probes,
+      comments,
       isAddingTarget,
       targetDraft,
       isAddingProbe,
@@ -626,7 +625,6 @@ class DataSheet extends Component {
       probeDraft,
       targetsTableHeaders,
       targetsCellStreaks,
-      users,
     } = this.state;
 
     return (
@@ -640,27 +638,34 @@ class DataSheet extends Component {
 
         {targets.filter(
           ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
-        ).map(target => (
-          <TargetBlock
-            key={target.id}
-            target={target}
-            targetTableHeaders={targetsTableHeaders[target.id]}
-            targetCellStreaks={targetsCellStreaks[target.id]}
-            probes={probes.filter(({ targetId }) => targetId === target.id)}
-            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
-            probeDraft={probeDraft}
-            onProbeDraftUpdate={(fieldName, value) => this.setState({
-              probeDraft: {
-                ...probeDraft,
-                [fieldName]: value,
-              },
-            })}
-            onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
-            onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
-            onCancelAddNewProbe={this.onCancelAddNewProbe}
-            users={users}
-          />
-        ))}
+        ).map((target) => {
+          const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+          const targetComments = comments.filter(({ probeId }) => (
+            targetProbes.find(({ id }) => id === probeId)
+          ));
+
+          return (
+            <TargetBlock
+              key={target.id}
+              target={target}
+              targetTableHeaders={targetsTableHeaders[target.id]}
+              targetCellStreaks={targetsCellStreaks[target.id]}
+              probes={targetProbes}
+              isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
+              probeDraft={probeDraft}
+              onProbeDraftUpdate={(fieldName, value) => this.setState({
+                probeDraft: {
+                  ...probeDraft,
+                  [fieldName]: value,
+                },
+              })}
+              onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+              onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
+              onCancelAddNewProbe={this.onCancelAddNewProbe}
+              comments={targetComments}
+            />
+          );
+        })}
         <br />
 
         {isAddingTarget ? (
@@ -692,29 +697,36 @@ class DataSheet extends Component {
 
         {targets.filter(
           ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived,
-        ).map(target => (
-          <TargetBlock
-            key={target.id}
-            target={target}
-            targetTableHeaders={targetsTableHeaders[target.id]}
-            targetCellStreaks={targetsCellStreaks[target.id]}
-            probes={probes.filter(({ targetId }) => targetId === target.id)}
-            isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
-            probeDraft={probeDraft}
-            onProbeDraftUpdate={(fieldName, value) => this.setState({
-              probeDraft: {
-                ...probeDraft,
-                [fieldName]: value,
-              },
-            })}
-            // onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
-            // onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
-            // onCancelAddNewProbe={this.onCancelAddNewProbe}
-            isArchived
-            onUnarchive={() => this.onUnarchiveTarget(target.id)}
-            users={users}
-          />
-        ))}
+        ).map((target) => {
+          const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+          const targetComments = comments.filter(({ probeId }) => (
+            targetProbes.find(({ id }) => id === probeId)
+          ));
+
+          return (
+            <TargetBlock
+              key={target.id}
+              target={target}
+              targetTableHeaders={targetsTableHeaders[target.id]}
+              targetCellStreaks={targetsCellStreaks[target.id]}
+              probes={targetProbes}
+              isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
+              probeDraft={probeDraft}
+              onProbeDraftUpdate={(fieldName, value) => this.setState({
+                probeDraft: {
+                  ...probeDraft,
+                  [fieldName]: value,
+                },
+              })}
+              // onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
+              // onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
+              // onCancelAddNewProbe={this.onCancelAddNewProbe}
+              comments={targetComments}
+              onUnarchive={() => this.onUnarchiveTarget(target.id)}
+              isArchived
+            />
+          );
+        })}
 
         {/* <C3Chart
           style={{ maxWidth: '60%', margin: '40px auto' }}
