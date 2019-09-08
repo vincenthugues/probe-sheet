@@ -12,3 +12,5 @@ export const PROBE_TABLE_HEADER_BY_TYPE = {
   [PROBE_TYPE.DAILY]: 'Probes',
   [PROBE_TYPE.RETENTION]: 'Probe de rétention',
 };
+
+export const TARGETS_AUTO_ARCHIVING = false;

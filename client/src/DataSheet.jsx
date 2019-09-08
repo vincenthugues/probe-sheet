@@ -12,7 +12,7 @@ import {
 import {
   fetchTargets, createTarget, fetchProbes, createProbe, fetchComments, createComment,
 } from './apiHandler';
-import { DEFAULT_BASELINE_PROBES, DEFAULT_DAILY_PROBES_STREAK, PROBE_TYPE } from './constants';
+import { DEFAULT_BASELINE_PROBES, DEFAULT_DAILY_PROBES_STREAK, PROBE_TYPE, TARGETS_AUTO_ARCHIVING } from './constants';
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
@@ -287,22 +287,25 @@ class DataSheet extends Component {
     }, {});
 
     // toggle isArchived automatically
-    const newTargets = targets.map((target) => {
-      const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+    if (TARGETS_AUTO_ARCHIVING) {
+      const newTargets = targets.map((target) => {
+        const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
 
-      if (targetProbes && targetProbes.length) {
-        const lastProbe = targetProbes[targetProbes.length - 1];
+        if (targetProbes && targetProbes.length) {
+          const lastProbe = targetProbes[targetProbes.length - 1];
 
-        return {
-          ...target,
-          isArchived: (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true),
-        };
-      }
-      return target;
-    });
+          return {
+            ...target,
+            isArchived: (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true),
+          };
+        }
+        return target;
+      });
+
+      this.setState({ targets: newTargets });
+    }
 
     this.setState({
-      targets: newTargets,
       targetsTableHeaders,
       targetsCellStreaks,
     });
