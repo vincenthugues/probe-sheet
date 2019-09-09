@@ -41,7 +41,7 @@ app.use('/targets', targetsRouter);
 app.use('/probes', probesRouter);
 app.use('/comments', commentsRouter);
 
-// error handling middleware should be loaded after the loading the routes
+// error handling middleware should be loaded after loading the routes
 if (app.get('env') === 'development') {
   app.use(errorHandler());
 }

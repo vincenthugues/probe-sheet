@@ -26,7 +26,6 @@ tables horizontal scrolling
 collapsible baseline columns after first daily probe
 allow other therapists edition
 share with parents
-plug in search
 internationalization
 offline mode
 https

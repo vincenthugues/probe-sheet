@@ -61,6 +61,11 @@ export default class SheetsListing extends Component {
       sheets: [],
       students: [],
       skillDomains: [],
+      filters: {
+        student: '',
+        skillDomain: '',
+      },
+      filteredSheetIds: [],
       sheetDraft: {},
       isAddingSheet: false,
     };
@@ -68,19 +73,58 @@ export default class SheetsListing extends Component {
 
   componentDidMount = async () => {
     const sheets = await fetchSheets();
-    const students = sheets.reduce((acc, { student }) => (
-      acc.includes(student) ? acc : [...acc, student]
-    ), []);
-    const skillDomains = sheets.reduce((acc, { skillDomain }) => (
-      acc.includes(skillDomain) ? acc : [...acc, skillDomain]
-    ), []);
+    const { students, skillDomains } = sheets.reduce((acc, { student, skillDomain }) => ({
+      students: [
+        ...acc.students,
+        ...acc.students.includes(student) ? [] : [student],
+      ],
+      skillDomains: [
+        ...acc.skillDomains,
+        ...acc.skillDomains.includes(skillDomain) ? [] : [skillDomain],
+      ],
+    }), {
+      students: [],
+      skillDomains: [],
+    });
+    const filteredSheetIds = this.getFilteredSheetIds(sheets);
 
     this.setState({
       sheets,
       students,
       skillDomains,
+      filteredSheetIds,
     });
   }
+
+  getFilteredSheetIds = (sheets, filters = {}) => sheets
+    .filter(({ student }) => !filters.student || student === filters.student)
+    .filter(({ skillDomain }) => !filters.skillDomain || skillDomain === filters.skillDomain)
+    .map(({ id }) => id);
+
+  updateFilters = (filter, value) => {
+    const { filters, sheets } = this.state;
+    const newFilters = {
+      ...filters,
+      [filter]: value,
+    };
+
+    this.setState({
+      filters: newFilters,
+      filteredSheetIds: this.getFilteredSheetIds(sheets, newFilters),
+    });
+  };
+
+  clearFilters = () => {
+    const filters = {
+      student: '',
+      skillDomain: '',
+    };
+
+    this.setState(({ sheets }) => ({
+      filters,
+      filteredSheetIds: this.getFilteredSheetIds(sheets, filters),
+    }));
+  };
 
   onConfirmAddNewSheet = async () => {
     const { sheetDraft, sheets } = this.state;
@@ -99,6 +143,8 @@ export default class SheetsListing extends Component {
       sheets,
       students,
       skillDomains,
+      filters,
+      filteredSheetIds,
       sheetDraft,
       isAddingSheet,
     } = this.state;
@@ -106,19 +152,22 @@ export default class SheetsListing extends Component {
     return (
       <Fragment>
         <FiltersView>
-          Filters:
-          <select>
-            <option value={null}>---- Elève ----</option>
+          Filtres:
+          <select value={filters.student} onChange={({ target: { value } }) => this.updateFilters('student', value)}>
+            <option value="">--- Tous les élèves ---</option>
             {students.map(student => (
               <option key={student} value={student}>{student}</option>
             ))}
           </select>
-          <select>
-            <option value={null}>--- Domaine de compétence ---</option>
+          <select value={filters.skillDomain} onChange={({ target: { value } }) => this.updateFilters('skillDomain', value)}>
+            <option value="">--- Tous domaines de compétence ---</option>
             {skillDomains.map(skillDomain => (
               <option key={skillDomain} value={skillDomain}>{skillDomain}</option>
             ))}
           </select>
+          <button type="button" onClick={this.clearFilters}>
+            Réinitialiser les filtres
+          </button>
         </FiltersView>
 
         <div style={{
@@ -129,14 +178,18 @@ export default class SheetsListing extends Component {
           padding: '10px',
         }}
         >
-          {sheets.map(({ id, student, skillDomain }) => (
-            <LinkView key={id} to={`/datasheet/${id}`}>
-              <SheetView>
-                <div>{student}</div>
-                <div>{skillDomain}</div>
-              </SheetView>
-            </LinkView>
-          ))}
+          {filteredSheetIds.map((sheetId) => {
+            const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
+
+            return (
+              <LinkView key={sheetId} to={`/datasheet/${sheetId}`}>
+                <SheetView>
+                  <div>{student}</div>
+                  <div>{skillDomain}</div>
+                </SheetView>
+              </LinkView>
+            );
+          })}
           <SheetView>
             {isAddingSheet ? (
               <NewSheetBlock
