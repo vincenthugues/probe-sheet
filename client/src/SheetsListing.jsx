@@ -31,6 +31,7 @@ const NewSheetBlockView = styled.div`
   flex: 0 1 auto;
   flex-direction: column;
 `;
+
 const NewSheetBlock = ({ sheetDraft: { student, skillDomain }, onFieldUpdate, children }) => (
   <NewSheetBlockView>
     <label htmlFor="student">
@@ -58,6 +59,8 @@ export default class SheetsListing extends Component {
     super(props);
     this.state = {
       sheets: [],
+      students: [],
+      skillDomains: [],
       sheetDraft: {},
       isAddingSheet: false,
     };
@@ -65,7 +68,18 @@ export default class SheetsListing extends Component {
 
   componentDidMount = async () => {
     const sheets = await fetchSheets();
-    this.setState({ sheets });
+    const students = sheets.reduce((acc, { student }) => (
+      acc.includes(student) ? acc : [...acc, student]
+    ), []);
+    const skillDomains = sheets.reduce((acc, { skillDomain }) => (
+      acc.includes(skillDomain) ? acc : [...acc, skillDomain]
+    ), []);
+
+    this.setState({
+      sheets,
+      students,
+      skillDomains,
+    });
   }
 
   onConfirmAddNewSheet = async () => {
@@ -81,23 +95,29 @@ export default class SheetsListing extends Component {
   }
 
   render() {
-    const { sheets, sheetDraft, isAddingSheet } = this.state;
+    const {
+      sheets,
+      students,
+      skillDomains,
+      sheetDraft,
+      isAddingSheet,
+    } = this.state;
 
     return (
       <Fragment>
         <FiltersView>
-        Filters:
+          Filters:
           <select>
             <option value={null}>---- Elève ----</option>
-            <option value={1}>Elève 1</option>
-            <option value={2}>Elève 2</option>
-            <option value={3}>Elève 3</option>
+            {students.map(student => (
+              <option key={student} value={student}>{student}</option>
+            ))}
           </select>
           <select>
             <option value={null}>--- Domaine de compétence ---</option>
-            <option value="1">Domaine 1</option>
-            <option value="2">Domaine 2</option>
-            <option value="3">Domaine 3</option>
+            {skillDomains.map(skillDomain => (
+              <option key={skillDomain} value={skillDomain}>{skillDomain}</option>
+            ))}
           </select>
         </FiltersView>
 
