@@ -199,7 +199,7 @@ const TargetBlock = ({
             <Th>Date</Th>
             {probes.map(({ id: probeId, date }) => (
               <Td key={probeId}>
-                {new Date(date).toDateString()}
+                {new Date(date).toLocaleDateString('fr-FR')}
               </Td>
             ))}
           </tr>
