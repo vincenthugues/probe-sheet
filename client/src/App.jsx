@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 import Login from './Login';
+import Admin from './Admin';
 import SheetsListing from './SheetsListing';
 import DataSheet from './DataSheet';
 
@@ -35,9 +36,11 @@ export default () => (
         <NavView>
           <MenuLinkView to="/">Home</MenuLinkView>
           <MenuLinkView to="/login">Login</MenuLinkView>
+          <MenuLinkView to="/admin">Admin</MenuLinkView>
         </NavView>
         <Route path="/" exact component={SheetsListing} />
         <Route path="/login" exact component={Login} />
+        <Route path="/admin" exact component={Admin} />
         <Route path="/datasheet/:sheetId" component={DataSheet} />
       </MainView>
     </Router>

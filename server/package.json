@@ -12,6 +12,7 @@
     "dotenv": "^8.0.0",
     "errorhandler": "^1.5.1",
     "express": "^4.17.1",
+    "express-basic-auth": "^1.2.0",
     "helmet": "^3.20.0",
     "morgan": "^1.9.1",
     "pg": "^7.12.0",

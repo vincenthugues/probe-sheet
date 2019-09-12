@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { pick } from 'ramda';
 
-const SERVER_URL = 'http://localhost:3001';
+const SERVER_URL = 'http://localhost:5000';
 
 // ////////////////
 // USERS

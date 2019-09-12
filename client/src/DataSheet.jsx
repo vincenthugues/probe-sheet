@@ -12,7 +12,12 @@ import {
 import {
   fetchTargets, createTarget, fetchProbes, createProbe, fetchComments, createComment,
 } from './apiHandler';
-import { DEFAULT_BASELINE_PROBES, DEFAULT_DAILY_PROBES_STREAK, PROBE_TYPE, TARGETS_AUTO_ARCHIVING } from './constants';
+import {
+  DEFAULT_BASELINE_PROBES,
+  DEFAULT_DAILY_PROBES_STREAK,
+  PROBE_TYPE,
+  TARGETS_AUTO_ARCHIVING,
+} from './constants';
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
