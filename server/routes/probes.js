@@ -1,13 +1,15 @@
 import express from 'express';
 
+import auth from '../middleware/auth';
+
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const probes = await req.context.models.Probe.findAll();
   return res.send(probes);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const probe = await req.context.models.Probe.create({
       type: req.body.type,
@@ -25,7 +27,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.get('/:probeId', async (req, res) => {
+router.get('/:probeId', auth, async (req, res) => {
   const probe = await req.context.models.Probe.findByPk(req.params.probeId);
   return res.send(probe);
 });
