@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Probe Sheet",
+  "name": "ABA data collection system",
   "icons": [
     {
       "src": "favicon.ico",
