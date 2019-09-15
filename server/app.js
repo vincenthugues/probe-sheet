@@ -1,6 +1,5 @@
-/* eslint-disable no-console */
-
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import errorHandler from 'errorhandler';
@@ -9,15 +8,18 @@ import 'dotenv/config';
 
 import models, { sequelize } from './models';
 import mockData from './models/mockData';
-import indexRouter from './routes/index';
+import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import sheetsRouter from './routes/sheets';
 import targetsRouter from './routes/targets';
 import probesRouter from './routes/probes';
 import commentsRouter from './routes/comments';
 
+const PORT = process.env.PORT || 5000;
+
 const app = express();
 
+app.use(express.static(path.join(__dirname, '/client/build')));
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
@@ -32,10 +34,11 @@ app.use(async (req, res, next) => {
   next();
 });
 
-app.use('/', indexRouter);
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../client/build/index.html')));
+
+app.get('/session', async (req, res) => res.send(req.context.user));
+app.use('/auth', authRouter);
 app.use('/users', usersRouter);
-// app.get('/session', (req, res) => res.send(models.users[req.context.user.id]));
-app.get('/session', async (req, res) => res.send(await req.context.models.User.findByPk(req.context.user.id)));
 app.use('/sheets', sheetsRouter);
 app.use('/targets', targetsRouter);
 app.use('/probes', probesRouter);
@@ -51,7 +54,7 @@ const seedDatabase = async () => {
     {
       username: 'John Doe',
       email: 'john.doe@example.com',
-      password: 'abc123',
+      password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
       sheets: mockData.sheets,
     },
     {
@@ -69,7 +72,8 @@ sequelize.sync({ force: process.env.ERASE_DB_ON_SYNC }).then(() => {
     seedDatabase();
   }
 
-  app.listen(process.env.PORT, () => {
-    console.log(`App listening on port ${process.env.PORT}!`);
+  app.listen(PORT, () => {
+    /* eslint-disable-next-line no-console */
+    console.log(`App listening on port ${PORT}`);
   });
 });

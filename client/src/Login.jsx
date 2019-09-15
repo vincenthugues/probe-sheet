@@ -1,106 +1,187 @@
 import React, { Component, Fragment } from 'react';
-import { Link } from 'react-router-dom';
-import { isEmpty } from 'ramda';
+import styled from 'styled-components';
 
-import { fetchUser, createUser } from './apiHandler';
+import { authenticate, fetchAuthUser, createUser } from './apiHandler';
 
-const USER_ID = 1;
+const MainView = styled.div`
+  padding: 10px;
+`;
 
-export default class Login extends Component {
+export default class SheetsListing extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: null,
-      password: null,
-      isSignUpOpen: false,
+      token: localStorage.getItem('token'),
+      user: null,
+      email: 'john.doe@example.com',
+      username: '',
+      password: 'admin',
+      isSignupOpen: false,
+      errorMessage: null,
     };
   }
 
-  onLoginConfirm = async () => {
-    const user = await fetchUser(USER_ID);
+  componentDidMount = async () => {
+    const { token } = this.state;
 
-    console.log('user', user);
+    try {
+      if (token) {
+        const user = await fetchAuthUser();
+        this.setState({
+          user,
+          errorMessage: null,
+        });
+      }
+    } catch (error) {
+      this.setState({ errorMessage: error.message });
+      this.logout();
+    }
   }
 
-  onLoginCancel = async () => {
-    this.setState({
-      email: null,
-      password: null,
-      isSignUpOpen: false,
-    });
-  }
-
-  onSignUpOpen = async () => {
-    this.setState({
-      password: null,
-      isSignUpOpen: true,
-    });
-  }
-
-  onSignUpConfirm = async () => {
+  login = async () => {
     const { email, password } = this.state;
-    const newUser = await createUser(email, password);
 
-    console.log('newUser', newUser);
+    try {
+      const { user, token } = await authenticate(email, password);
+
+      localStorage.setItem('token', token);
+
+      this.setState({
+        token,
+        user,
+        errorMessage: null,
+      });
+    } catch (error) {
+      this.setState({
+        errorMessage: error.message,
+        token: null,
+      });
+    }
   }
 
-  onSignUpCancel = () => {
+  logout = () => {
+    localStorage.removeItem('token');
+
     this.setState({
-      password: null,
-      isSignUpOpen: false,
+      token: null,
+      user: null,
+      errorMessage: null,
     });
   }
+
+  signup = async () => {
+    const { username, email, password } = this.state;
+
+    try {
+      const { token, user } = await createUser(username, email, password);
+
+      localStorage.setItem('token', token);
+
+      this.setState({
+        token,
+        user,
+        errorMessage: null,
+      });
+    } catch (error) {
+      this.setState({
+        errorMessage: error.message,
+        token: null,
+      });
+    }
+  }
+
+  // readCookie = async () => {
+  //   try {
+  //     const res = await axios.get('/read-cookie');
+
+  //     if (res.data.screen !== undefined) {
+  //       this.setState({ screen: res.data.screen });
+  //     }
+  //   } catch (e) {
+  //     this.setState({ screen: 'auth' });
+  //     console.log(e);
+  //   }
+  // };
+
+  // deleteCookie = async () => {
+  //   try {
+  //     await axios.get('/clear-cookie');
+  //     this.setState({ screen: 'auth' });
+  //   } catch (e) {
+  //     console.log(e);
+  //   }
+  // };
 
   render() {
-    const { email, password, isSignUpOpen } = this.state;
+    const {
+      email,
+      username,
+      password,
+      token,
+      user,
+      isSignupOpen,
+      errorMessage,
+    } = this.state;
+
+    const Login = () => (
+      <Fragment>
+        <label htmlFor="email">
+          Email:
+          <br />
+          <input id="email" type="text" value={email} onChange={e => this.setState({ email: e.target.value })} />
+        </label>
+        <br />
+        <label htmlFor="password">
+          Password:
+          <br />
+          <input id="password" type="password" value={password} onChange={e => this.setState({ password: e.target.value })} />
+        </label>
+        <br />
+        <button type="button" onClick={this.login}>Connexion</button>
+        <br />
+        <br />
+        <button type="button" onClick={() => this.setState({ isSignupOpen: true })}>Créer un compte</button>
+      </Fragment>
+    );
+
+    const Signup = () => (
+      <Fragment>
+        <label htmlFor="username">
+          Username:
+          <br />
+          <input id="username" type="text" value={username} onChange={e => this.setState({ username: e.target.value })} />
+        </label>
+        <br />
+        <label htmlFor="email">
+          Email:
+          <br />
+          <input id="email" type="text" value={email} onChange={e => this.setState({ email: e.target.value })} />
+        </label>
+        <br />
+        <label htmlFor="password">
+          Password:
+          <br />
+          <input id="password" type="password" value={password} onChange={e => this.setState({ password: e.target.value })} />
+        </label>
+        <br />
+        <button type="button" onClick={this.signup}>Inscription</button>
+        <br />
+        <br />
+        <button type="button" onClick={() => this.setState({ isSignupOpen: false })}>Annuler</button>
+      </Fragment>
+    );
 
     return (
-      <div style={{
-        border: 'dashed #B0B0B0 1px',
-        display: 'flex',
-        flex: '1 0 auto',
-        flexDirection: 'column',
-        justifyContent: 'space-around',
-        maxWidth: '400px',
-        margin: 'auto',
-        padding: '.4em',
-      }}
-      >
-        {isSignUpOpen ? (
-          <form>
-            <input placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
-            <input placeholder="password" value={password || ''} onChange={({ target: { value } }) => this.setState({ password: value })} />
-            <div>
-              <button type="button" disabled={isEmpty(email) || isEmpty(password)} onClick={this.onSignUpConfirm}>
-                Confirmer
-              </button>
-              <button type="button" onClick={this.onSignUpCancel}>
-                Annuler
-              </button>
-            </div>
-          </form>
-        ) : (
+      <MainView>
+        {errorMessage && <div>{errorMessage}</div>}
+        {token && (
           <Fragment>
-            <input placeholder="email" value={email || ''} onChange={({ target: { value } }) => this.setState({ email: value })} />
-            <input placeholder="password" value={password || ''} onChange={({ target: { value } }) => this.setState({ password: value })} />
-            <div>
-              <button type="button" disabled={isEmpty(email) || isEmpty(password)} onClick={this.onLoginConfirm}>
-                Confirmer
-              </button>
-              <Link to="/">
-                <button type="button" onClick={this.onLoginCancel}>
-                  Annuler
-                </button>
-              </Link>
-            </div>
-            <div>
-              <button type="button" onClick={this.onSignUpOpen}>
-                Créer un compte
-              </button>
-            </div>
+            {user && <div>{`User ${user.username} authenticated`}</div>}
+            <button type="button" onClick={this.logout}>Logout</button>
           </Fragment>
         )}
-      </div>
+        {!token && (isSignupOpen ? <Signup id="signup" /> : <Login id="login" />)}
+      </MainView>
     );
   }
 }

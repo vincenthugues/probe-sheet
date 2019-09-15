@@ -1,13 +1,15 @@
 import express from 'express';
 
+import auth from '../middleware/auth';
+
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', auth, async (req, res) => {
   const targets = await req.context.models.Target.findAll();
   return res.send(targets);
 });
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
   const target = await req.context.models.Target.create({
     name: req.body.name,
     baselineProbesNumber: req.body.baselineProbesNumber,
@@ -19,7 +21,7 @@ router.post('/', async (req, res) => {
   return res.send(target);
 });
 
-router.delete('/:targetId', async (req, res) => {
+router.delete('/:targetId', auth, async (req, res) => {
   await req.context.models.Target.destroy({
     where: { id: req.params.targetId },
   });

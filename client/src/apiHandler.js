@@ -3,7 +3,55 @@
 import axios from 'axios';
 import { pick } from 'ramda';
 
-const SERVER_URL = 'http://localhost:3001';
+const SERVER_URL = 'http://localhost:5000';
+
+export const getHeadersConfig = () => {
+  const token = localStorage.getItem('token');
+
+  const config = {
+    headers: {
+      'Content-type': 'application/json',
+    },
+  };
+  if (token) {
+    config.headers['x-auth-token'] = token;
+  }
+
+  return config;
+};
+
+// ////////////////
+// AUTH
+// ////////////////
+
+export const authenticate = async (email, password) => {
+  try {
+    const { data: { token, user } } = await axios.post(
+      `${SERVER_URL}/auth`,
+      JSON.stringify({
+        email,
+        password,
+      }),
+      getHeadersConfig(),
+    );
+
+    return { token, user };
+  } catch (err) {
+    console.error('error authenticating', err);
+    throw err;
+  }
+};
+
+export const fetchAuthUser = async () => {
+  try {
+    const { data: user } = await axios.get(`${SERVER_URL}/auth/user`, getHeadersConfig());
+
+    return user;
+  } catch (err) {
+    console.error('error fetching auth user', err);
+    throw err;
+  }
+};
 
 // ////////////////
 // USERS
@@ -11,7 +59,7 @@ const SERVER_URL = 'http://localhost:3001';
 
 export const fetchUsers = async () => {
   try {
-    const { data: users } = await axios.get(`${SERVER_URL}/users`);
+    const { data: users } = await axios.get(`${SERVER_URL}/users`, getHeadersConfig());
 
     return users;
   } catch (err) {
@@ -22,7 +70,7 @@ export const fetchUsers = async () => {
 
 export const fetchUser = async (userId) => {
   try {
-    const { data: user } = await axios.get(`${SERVER_URL}/users/${userId}`);
+    const { data: user } = await axios.get(`${SERVER_URL}/users/${userId}`, getHeadersConfig());
 
     return user;
   } catch (err) {
@@ -31,14 +79,14 @@ export const fetchUser = async (userId) => {
   }
 };
 
-export const createUser = async (email, password) => {
+export const createUser = async (username, email, password) => {
   try {
-    const { data: user } = await axios.post(
+    const { data: { token, user } } = await axios.post(
       `${SERVER_URL}/users`,
-      JSON.stringify({ email, password }), // TODO
+      { username, email, password },
     );
 
-    return user;
+    return { token, user };
   } catch (err) {
     console.error('error creating user', err);
     throw err;
@@ -51,7 +99,7 @@ export const createUser = async (email, password) => {
 
 export const fetchSheets = async () => {
   try {
-    const { data: sheets } = await axios.get(`${SERVER_URL}/sheets`);
+    const { data: sheets } = await axios.get(`${SERVER_URL}/sheets`, getHeadersConfig());
 
     return sheets;
   } catch (err) {
@@ -69,6 +117,7 @@ export const createSheet = async (draft) => {
         'student',
         'skillDomain',
       ], draft),
+      getHeadersConfig(),
     );
 
     return sheet;
@@ -84,7 +133,7 @@ export const createSheet = async (draft) => {
 
 export const fetchTargets = async (sheetId) => {
   try {
-    const { data: targets } = await axios.get(`${SERVER_URL}/targets`);
+    const { data: targets } = await axios.get(`${SERVER_URL}/targets`, getHeadersConfig());
 
     return targets.filter(({ sheetId: targetSheetId }) => targetSheetId === sheetId);
   } catch (err) {
@@ -94,16 +143,25 @@ export const fetchTargets = async (sheetId) => {
 };
 
 export const updateTarget = async (target) => {
-  const { match: { param: { sheetId } } } = this.props;
-  const response = await fetch(`${SERVER_URL}/targets/${sheetId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ target }),
-  });
-  const body = await response.json();
-  console.log('body', body);
+  try {
+    const { match: { param: { sheetId } } } = this.props;
+    const { data: updatedTarget } = await axios.patch(
+      `${SERVER_URL}/targets/${sheetId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ target }),
+      },
+      getHeadersConfig(),
+    );
+
+    return updatedTarget;
+  } catch (err) {
+    console.error('error fetching targets', err);
+    throw err;
+  }
 };
 
 export const createTarget = async (draft) => {
@@ -118,6 +176,7 @@ export const createTarget = async (draft) => {
         'ownerId',
         'sheetId',
       ], draft),
+      getHeadersConfig(),
     );
 
     return target;
@@ -133,7 +192,7 @@ export const createTarget = async (draft) => {
 
 export const fetchProbes = async () => { // TODO: handle targetId
   try {
-    const { data: probes } = await axios.get(`${SERVER_URL}/probes`);
+    const { data: probes } = await axios.get(`${SERVER_URL}/probes`, getHeadersConfig());
 
     return probes;
   } catch (err) {
@@ -154,6 +213,7 @@ export const createProbe = async (draft) => {
         'date',
         'response',
       ], draft),
+      getHeadersConfig(),
     );
 
     return probe;
@@ -169,7 +229,7 @@ export const createProbe = async (draft) => {
 
 export const fetchComments = async () => {
   try {
-    const { data: comments } = await axios.get(`${SERVER_URL}/comments`);
+    const { data: comments } = await axios.get(`${SERVER_URL}/comments`, getHeadersConfig());
 
     return comments;
   } catch (err) {
@@ -186,6 +246,7 @@ export const createComment = async (text, probeId) => {
         text,
         probeId,
       },
+      getHeadersConfig(),
     );
 
     return comment;
