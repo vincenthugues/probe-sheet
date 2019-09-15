@@ -5,7 +5,11 @@ import auth from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
-  const targets = await req.context.models.Target.findAll();
+  const targets = await req.context.models.Target.findAll({
+    where: {
+      ownerId: req.user.id,
+    },
+  });
   return res.send(targets);
 });
 
@@ -14,7 +18,7 @@ router.post('/', auth, async (req, res) => {
     name: req.body.name,
     baselineProbesNumber: req.body.baselineProbesNumber,
     dailyProbesStreak: req.body.dailyProbesStreak,
-    ownerId: req.context.user.id,
+    ownerId: req.user.id,
     sheetId: req.body.sheetId,
   });
 
@@ -23,7 +27,10 @@ router.post('/', auth, async (req, res) => {
 
 router.delete('/:targetId', auth, async (req, res) => {
   await req.context.models.Target.destroy({
-    where: { id: req.params.targetId },
+    where: {
+      id: req.params.targetId,
+      ownerId: req.user.id,
+    },
   });
 
   return res.send(true);

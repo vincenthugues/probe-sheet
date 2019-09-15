@@ -149,13 +149,13 @@ const probes = [
 // COMMENT
 // text
 // // probeId (Probe)
-// // authorId (User)
+// // ownerId (User)
 
 const comments = [
   {
     text: 'Test comment',
     probeId: 1,
-    authorId: 1,
+    ownerId: 1,
   },
 ];
 

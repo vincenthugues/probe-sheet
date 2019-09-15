@@ -5,7 +5,11 @@ import auth from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
-  const probes = await req.context.models.Probe.findAll();
+  const probes = await req.context.models.Probe.findAll({
+    where: {
+      ownerId: req.user.id,
+    },
+  });
   return res.send(probes);
 });
 
@@ -16,7 +20,7 @@ router.post('/', auth, async (req, res) => {
       date: req.body.date,
       response: req.body.response,
       therapist: req.body.therapist,
-      ownerId: req.context.user.id,
+      ownerId: req.user.id,
       targetId: req.body.targetId,
     });
 
@@ -28,7 +32,12 @@ router.post('/', auth, async (req, res) => {
 });
 
 router.get('/:probeId', auth, async (req, res) => {
-  const probe = await req.context.models.Probe.findByPk(req.params.probeId);
+  const probe = await req.context.models.Probe.findOne({
+    where: {
+      id: req.params.probeId,
+      ownerId: req.user.id,
+    },
+  });
   return res.send(probe);
 });
 

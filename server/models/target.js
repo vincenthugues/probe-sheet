@@ -6,7 +6,7 @@ const target = (sequelize, DataTypes) => {
   });
 
   Target.associate = (models) => {
-    Target.belongsTo(models.User, { as: 'therapist' });
+    Target.belongsTo(models.User, { as: 'owner' });
     Target.belongsTo(models.Sheet);
     Target.hasMany(models.Probe);
   };

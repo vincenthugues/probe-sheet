@@ -4,7 +4,7 @@ const comment = (sequelize, DataTypes) => {
   });
 
   Comment.associate = (models) => {
-    Comment.belongsTo(models.User, { as: 'author' });
+    Comment.belongsTo(models.User, { as: 'owner' });
     Comment.belongsTo(models.Probe);
   };
 
