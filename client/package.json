@@ -7,9 +7,9 @@
     "axios": "^0.18.1",
     "prop-types": "^15.7.2",
     "ramda": "^0.26.1",
-    "react": "^16.8.3",
+    "react": "^16.9.0",
     "react-c3js": "^0.1.20",
-    "react-dom": "^16.8.3",
+    "react-dom": "^16.9.0",
     "react-router-dom": "^5.0.0",
     "react-scripts": "2.1.5",
     "styled-components": "^4.1.3"
