@@ -72,6 +72,9 @@ export default class SheetsListing extends Component {
   }
 
   componentDidMount = async () => {
+    const { history } = this.props;
+    if (!localStorage.getItem('token')) history.push('/login');
+
     const sheets = await fetchSheets();
     const { students, skillDomains } = sheets.reduce((acc, { student, skillDomain }) => ({
       students: [
@@ -218,3 +221,6 @@ export default class SheetsListing extends Component {
     );
   }
 }
+SheetsListing.propTypes = {
+  history: PropTypes.shape().isRequired,
+};

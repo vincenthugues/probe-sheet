@@ -1,18 +1,18 @@
 import React, { Component, Fragment } from 'react';
+import { Redirect } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { authenticate, fetchAuthUser, createUser } from './apiHandler';
+import { authenticate, createUser } from './apiHandler';
 
 const MainView = styled.div`
   padding: 10px;
 `;
 
-export default class SheetsListing extends Component {
+export default class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
       token: localStorage.getItem('token'),
-      user: null,
       email: 'john.doe@example.com',
       username: '',
       password: 'admin',
@@ -21,34 +21,16 @@ export default class SheetsListing extends Component {
     };
   }
 
-  componentDidMount = async () => {
-    const { token } = this.state;
-
-    try {
-      if (token) {
-        const user = await fetchAuthUser();
-        this.setState({
-          user,
-          errorMessage: null,
-        });
-      }
-    } catch (error) {
-      this.setState({ errorMessage: error.message });
-      this.logout();
-    }
-  }
-
   login = async () => {
     const { email, password } = this.state;
 
     try {
-      const { user, token } = await authenticate(email, password);
+      const { token } = await authenticate(email, password);
 
       localStorage.setItem('token', token);
 
       this.setState({
         token,
-        user,
         errorMessage: null,
       });
     } catch (error) {
@@ -64,7 +46,6 @@ export default class SheetsListing extends Component {
 
     this.setState({
       token: null,
-      user: null,
       errorMessage: null,
     });
   }
@@ -73,13 +54,12 @@ export default class SheetsListing extends Component {
     const { username, email, password } = this.state;
 
     try {
-      const { token, user } = await createUser(username, email, password);
+      const { token } = await createUser(username, email, password);
 
       localStorage.setItem('token', token);
 
       this.setState({
         token,
-        user,
         errorMessage: null,
       });
     } catch (error) {
@@ -90,40 +70,17 @@ export default class SheetsListing extends Component {
     }
   }
 
-  // readCookie = async () => {
-  //   try {
-  //     const res = await axios.get('/read-cookie');
-
-  //     if (res.data.screen !== undefined) {
-  //       this.setState({ screen: res.data.screen });
-  //     }
-  //   } catch (e) {
-  //     this.setState({ screen: 'auth' });
-  //     console.log(e);
-  //   }
-  // };
-
-  // deleteCookie = async () => {
-  //   try {
-  //     await axios.get('/clear-cookie');
-  //     this.setState({ screen: 'auth' });
-  //   } catch (e) {
-  //     console.log(e);
-  //   }
-  // };
-
   render() {
     const {
       email,
       username,
       password,
       token,
-      user,
       isSignupOpen,
       errorMessage,
     } = this.state;
 
-    const Login = () => (
+    const LoginBlock = () => (
       <Fragment>
         <label htmlFor="email">
           Email:
@@ -144,7 +101,7 @@ export default class SheetsListing extends Component {
       </Fragment>
     );
 
-    const Signup = () => (
+    const SignupBlock = () => (
       <Fragment>
         <label htmlFor="username">
           Username:
@@ -173,14 +130,9 @@ export default class SheetsListing extends Component {
 
     return (
       <MainView>
+        {token && <Redirect to="/" />}
         {errorMessage && <div>{errorMessage}</div>}
-        {token && (
-          <Fragment>
-            {user && <div>{`User ${user.username} authenticated`}</div>}
-            <button type="button" onClick={this.logout}>Logout</button>
-          </Fragment>
-        )}
-        {!token && (isSignupOpen ? <Signup id="signup" /> : <Login id="login" />)}
+        {isSignupOpen ? <SignupBlock id="signup" /> : <LoginBlock id="login" />}
       </MainView>
     );
   }

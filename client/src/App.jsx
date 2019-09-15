@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import styled from 'styled-components';
 
 import Login from './Login';
+import Logout from './Logout';
 import Admin from './Admin';
 import SheetsListing from './SheetsListing';
 import DataSheet from './DataSheet';
@@ -29,20 +30,24 @@ const MenuLinkView = styled(Link)`
   text-decoration: none;
 `;
 
-export default () => (
+const App = () => (
   <div className="App">
     <Router>
       <MainView>
         <NavView>
-          <MenuLinkView to="/">Home</MenuLinkView>
-          <MenuLinkView to="/login">Login</MenuLinkView>
+          <MenuLinkView to="/">Index</MenuLinkView>
+          <MenuLinkView to="/login">Connexion</MenuLinkView>
+          <MenuLinkView to="/logout">Déconnexion</MenuLinkView>
           <MenuLinkView to="/admin">Admin</MenuLinkView>
         </NavView>
         <Route path="/" exact component={SheetsListing} />
         <Route path="/login" exact component={Login} />
+        <Route path="/logout" exact component={Logout} />
         <Route path="/admin" exact component={Admin} />
         <Route path="/datasheet/:sheetId" component={DataSheet} />
       </MainView>
     </Router>
   </div>
 );
+
+export default App;
