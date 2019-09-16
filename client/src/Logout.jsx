@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import { Redirect } from 'react-router-dom';
 
 export default class Logout extends Component {
-  componentDidMount = async () => {
+  componentDidMount = () => {
     if (localStorage.getItem('token')) {
       this.logout();
     }

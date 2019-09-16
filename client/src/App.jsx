@@ -30,16 +30,20 @@ const MenuLinkView = styled(Link)`
   text-decoration: none;
 `;
 
+const Nav = () => (
+  <NavView>
+    <MenuLinkView to="/">Index</MenuLinkView>
+    <MenuLinkView to="/admin">Admin</MenuLinkView>
+    <MenuLinkView to="/logout">Déconnexion</MenuLinkView>
+    <MenuLinkView to="/login">Connexion</MenuLinkView>
+  </NavView>
+);
+
 const App = () => (
   <div className="App">
     <Router>
       <MainView>
-        <NavView>
-          <MenuLinkView to="/">Index</MenuLinkView>
-          <MenuLinkView to="/login">Connexion</MenuLinkView>
-          <MenuLinkView to="/logout">Déconnexion</MenuLinkView>
-          <MenuLinkView to="/admin">Admin</MenuLinkView>
-        </NavView>
+        <Nav />
         <Route path="/" exact component={SheetsListing} />
         <Route path="/login" exact component={Login} />
         <Route path="/logout" exact component={Logout} />
