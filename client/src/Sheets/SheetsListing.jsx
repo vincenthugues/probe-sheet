@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { isEmpty } from 'ramda';
 import styled from 'styled-components';
 
-import { fetchSheets, createSheet } from './apiHandler';
+import { fetchSheets, createSheet } from '../apiHandler';
 
 const FiltersView = styled.div`
   display: flex;

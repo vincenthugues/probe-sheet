@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { isEmpty, prop } from 'ramda';
 
-import { PROBE_TYPE, PROBE_TABLE_HEADER_BY_TYPE } from './constants';
+import { PROBE_TYPE, PROBE_TABLE_HEADER_BY_TYPE } from '../constants';
 
 const TargetView = styled.div`
   display: flex;

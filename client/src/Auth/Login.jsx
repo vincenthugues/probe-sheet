@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { authenticate, createUser } from './apiHandler';
+import { authenticate, createUser } from '../apiHandler';
 
 const MainView = styled.div`
   padding: 10px;
