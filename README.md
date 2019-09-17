@@ -9,6 +9,8 @@ when acquired, ~1 week break, then retention probe
 
 
 ## Features
+- React client
+- Node.js/Express backend
 - Sign up & login
 - Sheets, targets, probes, comments
 
@@ -32,17 +34,13 @@ when acquired, ~1 week break, then retention probe
 - toggle isArchived?
 - retention probe reminder after a week?
 - after retention probe failed, suggest higher criterium?
-- weekly cumulative graph for retention (add week's total and add new point), w/ condition change lines??
+- weekly cumulative graph for retention, with nb of targets achieved in the week (add week's total and add new point), with condition change lines?
 - internationalization
 - offline mode
 - https
 - node-rate-limiter-flexible
-
-targets summary table (beginning, end when done, "baseline"?), skills tracking sheet
-
--> cumulative graph (nb of targets achieved in the week)
-
-PECS mands
+- targets summary table (beginning, end when done, retention), on a skills tracking sheet?
+- PECS mands
 
 ## Notes
 In case of PostgreSQL id conflict when inserting a new entry, do:
