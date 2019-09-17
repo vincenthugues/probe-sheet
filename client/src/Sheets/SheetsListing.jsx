@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, Redirect } from 'react-router-dom';
 import { isEmpty } from 'ramda';
 import styled from 'styled-components';
 
@@ -58,6 +58,7 @@ export default class SheetsListing extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isUserAuthenticated: !!localStorage.getItem('token'),
       sheets: [],
       students: [],
       skillDomains: [],
@@ -72,9 +73,14 @@ export default class SheetsListing extends Component {
   }
 
   componentDidMount = async () => {
-    const { history } = this.props;
-    if (!localStorage.getItem('token')) history.push('/login');
+    const { isUserAuthenticated } = this.state;
 
+    if (isUserAuthenticated) {
+      this.updateSheetsList();
+    }
+  }
+
+  updateSheetsList = async () => {
     const sheets = await fetchSheets();
     const { students, skillDomains } = sheets.reduce((acc, { student, skillDomain }) => ({
       students: [
@@ -130,19 +136,21 @@ export default class SheetsListing extends Component {
   };
 
   onConfirmAddNewSheet = async () => {
-    const { sheetDraft, sheets } = this.state;
+    const { sheetDraft } = this.state;
 
-    const newSheet = await createSheet(sheetDraft);
+    await createSheet(sheetDraft);
 
     this.setState({
-      sheets: [...sheets, newSheet],
       sheetDraft: {},
       isAddingSheet: false,
     });
+
+    this.updateSheetsList();
   }
 
   render() {
     const {
+      isUserAuthenticated,
       sheets,
       students,
       skillDomains,
@@ -151,6 +159,8 @@ export default class SheetsListing extends Component {
       sheetDraft,
       isAddingSheet,
     } = this.state;
+
+    if (!isUserAuthenticated) return <Redirect to="/login" />;
 
     return (
       <Fragment>
@@ -221,6 +231,3 @@ export default class SheetsListing extends Component {
     );
   }
 }
-SheetsListing.propTypes = {
-  history: PropTypes.shape().isRequired,
-};

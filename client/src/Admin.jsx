@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import { Redirect } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { fetchUsers } from './apiHandler';
@@ -11,6 +12,7 @@ export default class SheetsListing extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      isUserAuthenticated: !!localStorage.getItem('token'),
       users: [],
     };
   }
@@ -27,7 +29,9 @@ export default class SheetsListing extends Component {
   }
 
   render() {
-    const { users } = this.state;
+    const { isUserAuthenticated, users } = this.state;
+
+    if (!isUserAuthenticated) return <Redirect to="/login" />;
 
     return (
       <MainView>
