@@ -1,9 +1,11 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
 import styled from 'styled-components';
 
 import { authenticate, createUser } from '../apiHandler';
+import { setIsAuthenticated, setUser } from '../actions';
 
 const MainView = styled.div`
   padding: 10px;
@@ -13,8 +15,8 @@ class LoginBlock extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: 'john.doe@example.com',
-      password: 'admin',
+      email: '',
+      password: '',
     };
   }
 
@@ -53,9 +55,9 @@ class SignupBlock extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: 'john.doe@example.com',
+      email: '',
       username: '',
-      password: 'admin',
+      password: '',
     };
   }
 
@@ -96,6 +98,17 @@ SignupBlock.propTypes = {
   onSignupClose: PropTypes.func.isRequired,
 };
 
+const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
+  isAuthenticated,
+});
+
+const mapDispatchToProps = dispatch => ({
+  onAuth: (user) => {
+    dispatch(setUser(user));
+    dispatch(setIsAuthenticated(true));
+  },
+});
+
 class Login extends Component {
   constructor(props) {
     super(props);
@@ -107,46 +120,41 @@ class Login extends Component {
 
   login = async (email, password) => {
     try {
-      const { token } = await authenticate(email, password);
+      const { onAuth } = this.props;
+      const { token, user } = await authenticate(email, password);
 
       localStorage.setItem('token', token);
 
-      this.setState({
-        errorMessage: null,
-        isUserAuthenticated: true,
-      });
+      this.setState({ errorMessage: null });
+
+      onAuth(user);
     } catch (error) {
-      this.setState({
-        errorMessage: error.message,
-        isUserAuthenticated: false,
-      });
+      this.setState({ errorMessage: error.message });
     }
   }
 
   signup = async (email, username, password) => {
     try {
-      const { token } = await createUser(username, email, password);
+      const { onAuth } = this.props;
+      const { token, user } = await createUser(username, email, password);
 
       localStorage.setItem('token', token);
 
-      this.setState({
-        errorMessage: null,
-        isUserAuthenticated: true,
-      });
+      this.setState({ errorMessage: null });
+
+      onAuth(user);
     } catch (error) {
-      this.setState({
-        errorMessage: error.message,
-        isUserAuthenticated: false,
-      });
+      this.setState({ errorMessage: error.message });
     }
   }
 
   render() {
-    const { isUserAuthenticated, isSignupOpen, errorMessage } = this.state;
+    const { isAuthenticated } = this.props;
+    const { isSignupOpen, errorMessage } = this.state;
 
     return (
       <MainView>
-        {isUserAuthenticated && <Redirect to="/" />}
+        {isAuthenticated && <Redirect to="/" />}
         {errorMessage && <div>{errorMessage}</div>}
         {isSignupOpen ? (
           <SignupBlock
@@ -163,5 +171,12 @@ class Login extends Component {
     );
   }
 }
+Login.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+  onAuth: PropTypes.func.isRequired,
+};
 
-export default Login;
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Login);

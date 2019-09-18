@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { Component, Fragment } from 'react';
+import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { Provider, connect } from 'react-redux';
 import styled from 'styled-components';
 
+import store from './store';
+import { setIsAuthenticated } from './actions';
 import Login from './Auth/Login';
 import Logout from './Auth/Logout';
 import Admin from './Admin';
@@ -30,27 +34,62 @@ const NavLinkView = styled(Link)`
   text-decoration: none;
 `;
 
-const Nav = () => (
-  <NavView>
-    <NavLinkView to="/">Index</NavLinkView>
-    <NavLinkView to="/admin">Admin</NavLinkView>
-    <NavLinkView to="/logout">Déconnexion</NavLinkView>
-    <NavLinkView to="/login">Connexion</NavLinkView>
-  </NavView>
-);
+class NavBar extends Component {
+  componentDidMount() {
+    const { onAuth } = this.props;
+
+    if (localStorage.getItem('token')) {
+      onAuth();
+    }
+  }
+
+  render() {
+    const { isAuthenticated } = this.props;
+
+    return (
+      <NavView>
+        {isAuthenticated ? (
+          <Fragment>
+            <NavLinkView to="/">Index</NavLinkView>
+            <NavLinkView to="/admin">Admin</NavLinkView>
+            <NavLinkView to="/logout">Déconnexion</NavLinkView>
+          </Fragment>
+        ) : (
+          <NavLinkView to="/login">Connexion</NavLinkView>
+        )}
+      </NavView>
+    );
+  }
+}
+NavBar.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+  onAuth: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
+  isAuthenticated,
+});
+
+const mapDispatchToProps = dispatch => ({
+  onAuth: () => dispatch(setIsAuthenticated(true)),
+});
+
+const AuthNavBar = connect(mapStateToProps, mapDispatchToProps)(NavBar);
 
 const App = () => (
   <div className="App">
-    <Router>
-      <MainView>
-        <Nav />
-        <Route path="/" exact component={SheetsListing} />
-        <Route path="/login" exact component={Login} />
-        <Route path="/logout" exact component={Logout} />
-        <Route path="/admin" exact component={Admin} />
-        <Route path="/datasheet/:sheetId" component={DataSheet} />
-      </MainView>
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <MainView>
+          <AuthNavBar />
+          <Route path="/" exact component={SheetsListing} />
+          <Route path="/login" exact component={Login} />
+          <Route path="/logout" exact component={Logout} />
+          <Route path="/admin" exact component={Admin} />
+          <Route path="/datasheet/:sheetId" component={DataSheet} />
+        </MainView>
+      </Router>
+    </Provider>
   </div>
 );
 
