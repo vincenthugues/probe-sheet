@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import { setIsAuthenticated, setUser } from '../actions';
+import { setIsAuthenticatedActionCreator, setUserActionCreator } from '../actions';
 
 const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
   isAuthenticated,
@@ -11,8 +11,8 @@ const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
 
 const mapDispatchToProps = dispatch => ({
   resetUser: () => {
-    dispatch(setUser(null));
-    dispatch(setIsAuthenticated(false));
+    dispatch(setUserActionCreator(null));
+    dispatch(setIsAuthenticatedActionCreator(false));
   },
 });
 

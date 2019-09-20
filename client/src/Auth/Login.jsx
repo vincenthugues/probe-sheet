@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import styled from 'styled-components';
 
 import { authenticate, createUser } from '../apiHandler';
-import { setIsAuthenticated, setUser } from '../actions';
+import { setIsAuthenticatedActionCreator, setUserActionCreator } from '../actions';
 
 const MainView = styled.div`
   padding: 10px;
@@ -104,8 +104,8 @@ const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
 
 const mapDispatchToProps = dispatch => ({
   onAuth: (user) => {
-    dispatch(setUser(user));
-    dispatch(setIsAuthenticated(true));
+    dispatch(setUserActionCreator(user));
+    dispatch(setIsAuthenticatedActionCreator(true));
   },
 });
 

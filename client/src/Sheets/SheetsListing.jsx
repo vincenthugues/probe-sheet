@@ -1,10 +1,11 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Link, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
 import { isEmpty } from 'ramda';
 import styled from 'styled-components';
 
-import { fetchSheets, createSheet } from '../apiHandler';
+import { getSheetsHandler, createSheetHandler } from '../actions';
 
 const FiltersView = styled.div`
   display: flex;
@@ -54,12 +55,10 @@ NewSheetBlock.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-export default class SheetsListing extends Component {
+class SheetsListing extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      isUserAuthenticated: !!localStorage.getItem('token'),
-      sheets: [],
       students: [],
       skillDomains: [],
       filters: {
@@ -73,15 +72,25 @@ export default class SheetsListing extends Component {
   }
 
   componentDidMount = async () => {
-    const { isUserAuthenticated } = this.state;
+    const { isAuthenticated, getSheets } = this.props;
 
-    if (isUserAuthenticated) {
-      this.updateSheetsList();
+    if (isAuthenticated) {
+      await getSheets();
+      this.computeSheetsMetadata();
     }
   }
 
-  updateSheetsList = async () => {
-    const sheets = await fetchSheets();
+  componentDidUpdate = async ({ sheets: prevSheets }) => {
+    const { sheets } = this.props;
+
+    if (sheets !== prevSheets) { // TODO: deep comparison
+      this.computeSheetsMetadata();
+    }
+  }
+
+  computeSheetsMetadata = async () => {
+    const { sheets } = this.props;
+
     const { students, skillDomains } = sheets.reduce((acc, { student, skillDomain }) => ({
       students: [
         ...acc.students,
@@ -98,7 +107,6 @@ export default class SheetsListing extends Component {
     const filteredSheetIds = this.getFilteredSheetIds(sheets);
 
     this.setState({
-      sheets,
       students,
       skillDomains,
       filteredSheetIds,
@@ -124,34 +132,34 @@ export default class SheetsListing extends Component {
   };
 
   clearFilters = () => {
+    const { sheets } = this.props;
     const filters = {
       student: '',
       skillDomain: '',
     };
 
-    this.setState(({ sheets }) => ({
+    this.setState({
       filters,
       filteredSheetIds: this.getFilteredSheetIds(sheets, filters),
-    }));
+    });
   };
 
   onConfirmAddNewSheet = async () => {
+    const { createSheet } = this.props;
     const { sheetDraft } = this.state;
-
-    await createSheet(sheetDraft);
 
     this.setState({
       sheetDraft: {},
       isAddingSheet: false,
     });
 
-    this.updateSheetsList();
+    await createSheet(sheetDraft);
+    this.computeSheetsMetadata();
   }
 
   render() {
+    const { isAuthenticated, sheets } = this.props;
     const {
-      isUserAuthenticated,
-      sheets,
       students,
       skillDomains,
       filters,
@@ -160,7 +168,7 @@ export default class SheetsListing extends Component {
       isAddingSheet,
     } = this.state;
 
-    if (!isUserAuthenticated) return <Redirect to="/login" />;
+    if (!isAuthenticated) return <Redirect to="/login" />;
 
     return (
       <Fragment>
@@ -231,3 +239,24 @@ export default class SheetsListing extends Component {
     );
   }
 }
+SheetsListing.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+  sheets: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  getSheets: PropTypes.func.isRequired,
+  createSheet: PropTypes.func.isRequired,
+};
+
+const mapStateToProps = ({
+  auth: { isAuthenticated },
+  probeSheets: { sheets },
+}) => ({
+  isAuthenticated,
+  sheets,
+});
+
+const mapDispatchToProps = dispatch => ({
+  getSheets: getSheetsHandler(dispatch),
+  createSheet: createSheetHandler(dispatch),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(SheetsListing);

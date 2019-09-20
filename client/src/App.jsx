@@ -5,7 +5,7 @@ import { Provider, connect } from 'react-redux';
 import styled from 'styled-components';
 
 import store from './store';
-import { setIsAuthenticated } from './actions';
+import { setIsAuthenticatedActionCreator } from './actions';
 import Login from './Auth/Login';
 import Logout from './Auth/Logout';
 import Admin from './Admin';
@@ -71,7 +71,7 @@ const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  onAuth: () => dispatch(setIsAuthenticated(true)),
+  onAuth: () => dispatch(setIsAuthenticatedActionCreator(true)),
 });
 
 const AuthNavBar = connect(mapStateToProps, mapDispatchToProps)(NavBar);
