@@ -133,9 +133,10 @@ export const createSheet = async (draft) => {
 
 export const fetchTargets = async (sheetId) => {
   try {
-    const { data: targets } = await axios.get(`${SERVER_URL}/targets`, getHeadersConfig());
+    const { data: targets } = await axios.get(`${SERVER_URL}/targets${sheetId ? `?sheetId=${sheetId}` : ''}`, getHeadersConfig());
 
-    return targets.filter(({ sheetId: targetSheetId }) => targetSheetId === sheetId);
+    // return targets.filter(({ sheetId: targetSheetId }) => targetSheetId === sheetId);
+    return targets;
   } catch (err) {
     console.error('error fetching targets', err);
     throw err;

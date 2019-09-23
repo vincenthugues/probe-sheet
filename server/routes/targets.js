@@ -5,9 +5,11 @@ import auth from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
+  const { query: { sheetId } } = req;
   const targets = await req.context.models.Target.findAll({
     where: {
       ownerId: req.user.id,
+      ...sheetId ? { sheetId } : {},
     },
   });
   return res.send(targets);

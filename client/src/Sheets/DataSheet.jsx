@@ -1,17 +1,14 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import {
-  isEmpty,
-  lensPath,
-  set,
-  update,
-} from 'ramda';
+import { connect } from 'react-redux';
+import { isEmpty, update } from 'ramda';
 // import C3Chart from 'react-c3js';
 
 import {
-  fetchTargets, createTarget, fetchProbes, createProbe, fetchComments, createComment,
+  fetchProbes, createProbe, fetchComments, createComment,
 } from '../apiHandler';
+import { getTargetsHandler, createTargetHandler } from '../actions';
 import {
   DEFAULT_BASELINE_PROBES,
   DEFAULT_DAILY_PROBES_STREAK,
@@ -21,7 +18,6 @@ import {
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
-  targets: [],
   probes: [],
   comments: [],
 
@@ -31,7 +27,7 @@ const INITIAL_STATE = {
   },
   isAddingTarget: false,
   targetDraft: {
-    target: '',
+    name: '',
   },
   isAddingProbe: false,
   addingProbeToTargetId: null,
@@ -52,14 +48,14 @@ const NewTargetBlockView = styled.div`
 `;
 
 const NewTargetBlock = ({
-  targetDraft: { target, baselineProbesNumber, dailyProbesStreak },
+  targetDraft: { name, baselineProbesNumber, dailyProbesStreak },
   onFieldUpdate,
   children,
 }) => (
   <NewTargetBlockView>
-    <label htmlFor="target">
+    <label htmlFor="name">
       Cible
-      <input id="target" value={target} onChange={({ target: { value } }) => onFieldUpdate('target', value)} />
+      <input id="name" value={name} onChange={({ target: { value } }) => onFieldUpdate('name', value)} />
     </label>
     <label htmlFor="baselineProbesNumber">
       Baseline #
@@ -74,7 +70,7 @@ const NewTargetBlock = ({
 );
 NewTargetBlock.propTypes = {
   targetDraft: PropTypes.shape({
-    target: PropTypes.string,
+    name: PropTypes.string,
     baselineProbesNumber: PropTypes.number,
     dailyProbesStreak: PropTypes.number,
   }).isRequired,
@@ -104,15 +100,14 @@ class DataSheet extends Component {
   }
 
   async componentDidMount() {
-    const { match } = this.props;
+    const { match, getTargets } = this.props;
     const sheetId = Number(match.params.sheetId);
 
-    const targets = await fetchTargets(sheetId);
+    await getTargets(sheetId);
     const probes = await fetchProbes();
     const comments = await fetchComments();
 
     this.setState({
-      targets,
       probes,
       comments,
     });
@@ -121,7 +116,9 @@ class DataSheet extends Component {
   }
 
   onOpenAddNewProbe = (selectedTargetId) => {
-    this.setState(({ targets, probes, targetsCellStreaks }) => ({
+    const { targets } = this.props;
+
+    this.setState(({ probes, targetsCellStreaks }) => ({
       isAddingProbe: true,
       addingProbeToTargetId: selectedTargetId,
       probeDraft: this.getNextProbeDraft(
@@ -164,39 +161,32 @@ class DataSheet extends Component {
   }
 
   onAddNewTarget = async () => {
-    const { match } = this.props;
-    const { targetDraft, targets } = this.state;
+    const { match, createTarget } = this.props;
+    const { targetDraft } = this.state;
 
-    const newTarget = await createTarget({
+    await createTarget({
       ...targetDraft,
-      name: targetDraft.target,
       creationDate: Date.now(),
       ownerId: 1, // TODO
       sheetId: match.params.sheetId,
     });
 
-    this.setState({
-      targets: [
-        ...targets,
-        newTarget,
-      ],
-      isAddingTarget: false,
-    });
+    this.setState({ isAddingTarget: false });
     this.computeTargetsMetadata();
   }
 
-  onUnarchiveTarget = (targetId) => {
-    this.setState(state => ({
-      targets: set(
-        lensPath([
-          state.targets.findIndex(({ id }) => id === targetId),
-          'isArchived',
-        ]),
-        false,
-        state.targets,
-      ),
-    }));
-  }
+  // onUnarchiveTarget = (targetId) => {
+  //   this.setState(state => ({
+  //     targets: set(
+  //       lensPath([
+  //         state.targets.findIndex(({ id }) => id === targetId),
+  //         'isArchived',
+  //       ]),
+  //       false,
+  //       state.targets,
+  //     ),
+  //   }));
+  // }
 
   getNextProbeDraft = (target, probes, targetCellStreaks) => {
     const { currentUser } = this.state;
@@ -223,7 +213,7 @@ class DataSheet extends Component {
 
     return {
       type: guessNextProbeType(target),
-      date: '', // (new Date()).toISOString().slice(5, 10).split('-').reverse().join('/'),
+      date: '',
       therapist: currentUser.name,
       response: true,
       comment: '',
@@ -232,7 +222,8 @@ class DataSheet extends Component {
 
   // TODO: cleanup
   computeTargetsMetadata = () => {
-    const { targets, probes } = this.state;
+    const { targets } = this.props;
+    const { probes } = this.state;
 
     const targetsTableHeaders = targets.reduce((acc1, { id }) => {
       const targetProbes = probes.filter(({ targetId }) => targetId === id);
@@ -293,21 +284,24 @@ class DataSheet extends Component {
 
     // toggle isArchived automatically
     if (TARGETS_AUTO_ARCHIVING) {
-      const newTargets = targets.map((target) => {
-        const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+      // const newTargets = targets.map((target) => {
+      //   const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
 
-        if (targetProbes && targetProbes.length) {
-          const lastProbe = targetProbes[targetProbes.length - 1];
+      //   if (targetProbes && targetProbes.length) {
+      //     const lastProbe = targetProbes[targetProbes.length - 1];
 
-          return {
-            ...target,
-            isArchived: (lastProbe.type === PROBE_TYPE.RETENTION && lastProbe.response === true),
-          };
-        }
-        return target;
-      });
+      //     return {
+      //       ...target,
+      //       isArchived: (
+      //         lastProbe.type === PROBE_TYPE.RETENTION
+      //         && lastProbe.response === true
+      //       ),
+      //     };
+      //   }
+      //   return target;
+      // });
 
-      this.setState({ targets: newTargets });
+      // this.setState({ targets: newTargets });
     }
 
     this.setState({
@@ -317,8 +311,8 @@ class DataSheet extends Component {
   }
 
   render() {
+    const { targets } = this.props;
     const {
-      targets,
       probes,
       comments,
       isAddingTarget,
@@ -382,7 +376,7 @@ class DataSheet extends Component {
             })}
           >
             <div>
-              <button type="button" disabled={isEmpty(targetDraft.target)} onClick={this.onAddNewTarget}>
+              <button type="button" disabled={isEmpty(targetDraft.name)} onClick={this.onAddNewTarget}>
                 Confirmer
               </button>
               <button type="button" onClick={() => this.setState({ isAddingTarget: false })}>
@@ -391,7 +385,7 @@ class DataSheet extends Component {
             </div>
           </NewTargetBlock>
         ) : (
-          <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { target: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
+          <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { name: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
             Nouvelle cible
           </AddTargetButtonView>
         )}
@@ -457,6 +451,23 @@ DataSheet.propTypes = {
       sheetId: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
+  targets: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    baselineProbesNumber: PropTypes.number.isRequired,
+    dailyProbesStreak: PropTypes.number.isRequired,
+  })).isRequired,
+  getTargets: PropTypes.func.isRequired,
+  createTarget: PropTypes.func.isRequired,
 };
 
-export default DataSheet;
+const mapStateToProps = ({ probeSheets: { targets } }) => ({
+  targets,
+});
+
+const mapDispatchToProps = dispatch => ({
+  getTargets: getTargetsHandler(dispatch),
+  createTarget: createTargetHandler(dispatch),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(DataSheet);

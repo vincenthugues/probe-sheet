@@ -18,6 +18,7 @@ when acquired, ~1 week break, then retention probe
 ## TODO
 - set up db (aws? elephantsql?)
 - global store
+- reselect
 - logging
 - allow pdf export/print display
 - improve rest api

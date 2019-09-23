@@ -1,5 +1,5 @@
 import {
-  fetchSheets, createSheet,
+  fetchSheets, createSheet, fetchTargets, createTarget,
 } from './apiHandler';
 
 /*
@@ -11,6 +11,9 @@ export const SET_IS_AUTHENTICATED = 'SET_IS_AUTHENTICATED';
 
 export const GET_SHEETS = 'GET_SHEETS';
 export const CREATE_SHEET = 'CREATE_SHEET';
+
+export const GET_TARGETS = 'GET_TARGETS';
+export const CREATE_TARGET = 'CREATE_TARGET';
 
 /*
  * other constants
@@ -33,7 +36,7 @@ const getSheetsActionCreator = sheets => ({
 });
 export const getSheetsHandler = dispatch => async () => {
   const sheets = await fetchSheets();
-  return dispatch(getSheetsActionCreator(sheets)); // RETURN?
+  return dispatch(getSheetsActionCreator(sheets));
 };
 
 const createSheetActionCreator = sheet => ({
@@ -42,5 +45,23 @@ const createSheetActionCreator = sheet => ({
 });
 export const createSheetHandler = dispatch => async (sheetDraft) => {
   const sheet = await createSheet(sheetDraft);
-  dispatch(createSheetActionCreator(sheet));
+  return dispatch(createSheetActionCreator(sheet));
+};
+
+const getTargetsActionCreator = targets => ({
+  type: GET_TARGETS,
+  targets,
+});
+export const getTargetsHandler = dispatch => async (sheetId) => {
+  const targets = await fetchTargets(sheetId);
+  return dispatch(getTargetsActionCreator(targets));
+};
+
+const createTargetActionCreator = target => ({
+  type: CREATE_TARGET,
+  target,
+});
+export const createTargetHandler = dispatch => async (targetDraft) => {
+  const target = await createTarget(targetDraft);
+  return dispatch(createTargetActionCreator(target));
 };

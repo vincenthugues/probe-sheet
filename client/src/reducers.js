@@ -4,6 +4,8 @@ import {
   SET_IS_AUTHENTICATED,
   GET_SHEETS,
   CREATE_SHEET,
+  GET_TARGETS,
+  CREATE_TARGET,
 } from './actions';
 
 const AUTH_DEFAULT_STATE = {
@@ -30,6 +32,7 @@ const auth = (state = AUTH_DEFAULT_STATE, action) => {
 
 const PROBESHEETS_DEFAULT_STATE = {
   sheets: [],
+  targets: [],
 };
 
 const probeSheets = (state = PROBESHEETS_DEFAULT_STATE, action) => {
@@ -43,6 +46,16 @@ const probeSheets = (state = PROBESHEETS_DEFAULT_STATE, action) => {
       return {
         ...state,
         sheets: [...state.sheets, action.sheet],
+      };
+    case GET_TARGETS:
+      return {
+        ...state,
+        targets: action.targets,
+      };
+    case CREATE_TARGET:
+      return {
+        ...state,
+        targets: [...state.targets, action.target],
       };
     default:
       return state;
