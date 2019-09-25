@@ -14,6 +14,8 @@ import {
  * action types
  */
 
+export const RESET_STORE = 'RESET_STORE';
+
 export const GET_AUTH_USER = 'GET_AUTH_USER';
 
 export const SET_USER = 'SET_USER';
@@ -40,7 +42,14 @@ export const CREATE_COMMENT = 'CREATE_COMMENT';
  * action creators
  */
 
-export const getAuthUserActionCreator = user => ({ type: GET_AUTH_USER, user });
+const resetStoreActionCreator = () => ({ type: RESET_STORE });
+
+export const logoutHandler = dispatch => () => {
+  localStorage.removeItem('token');
+  return dispatch(resetStoreActionCreator());
+};
+
+const getAuthUserActionCreator = user => ({ type: GET_AUTH_USER, user });
 export const getAuthUserHandler = dispatch => async () => {
   const user = await fetchAuthUser();
   return dispatch(getAuthUserActionCreator(user));

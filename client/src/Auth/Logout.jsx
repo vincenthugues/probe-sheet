@@ -3,33 +3,16 @@ import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import { setIsAuthenticatedActionCreator, setUserActionCreator } from '../actions';
-
-const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
-  isAuthenticated,
-});
-
-const mapDispatchToProps = dispatch => ({
-  resetUser: () => {
-    dispatch(setUserActionCreator(null));
-    dispatch(setIsAuthenticatedActionCreator(false));
-  },
-});
+import { logoutHandler } from '../actions';
 
 class Logout extends Component {
-  componentDidMount = () => {
-    const { isAuthenticated } = this.props;
+  constructor(props) {
+    super(props);
+    const { isAuthenticated, logout } = this.props;
 
     if (isAuthenticated) {
-      this.logout();
+      logout();
     }
-  }
-
-  logout = () => {
-    const { resetUser } = this.props;
-
-    localStorage.removeItem('token');
-    resetUser();
   }
 
   render() {
@@ -38,8 +21,16 @@ class Logout extends Component {
 }
 Logout.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
-  resetUser: PropTypes.func.isRequired,
+  logout: PropTypes.func.isRequired,
 };
+
+const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
+  isAuthenticated,
+});
+
+const mapDispatchToProps = dispatch => ({
+  logout: logoutHandler(dispatch),
+});
 
 export default connect(
   mapStateToProps,

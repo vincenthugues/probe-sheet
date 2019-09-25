@@ -4,6 +4,7 @@ import {
 } from 'ramda';
 
 import {
+  RESET_STORE,
   GET_AUTH_USER,
   SET_USER,
   SET_IS_AUTHENTICATED,
@@ -116,7 +117,18 @@ const probeSheets = (state = PROBESHEETS_DEFAULT_STATE, action) => {
   }
 };
 
-export default combineReducers({
-  auth,
-  probeSheets,
-});
+const rootReducer = (state, action) => {
+  const appReducer = combineReducers({
+    auth,
+    probeSheets,
+  });
+
+  if (action.type === RESET_STORE) {
+    // Reset all substates to their default
+    return appReducer(undefined, action);
+  }
+
+  return appReducer(state, action);
+};
+
+export default rootReducer;
