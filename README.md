@@ -1,41 +1,44 @@
 ## Basics
-baseline: initial objective assessment (>= 1/3 NO -> failed, OR x%)
+The baseline is the initial objective assessment (considered failed if at least 1/3 of "No" responses, or above a certain percentage)
 
-each session: cold probe OR %age on at least ~10 tries, comments/observations
+During each session, a cold probe is done once or a response is determined based on a percentage on at least ~10 tries, and comments/observations are written down
 
-acquired when...: e.g. YES 3 consecutive sessions, ~90% for ~3 consec. sessions
+A target can be acquired after for example a "Yes" response in 3 consecutive sessions, or ~90% for ~3 consecutive sessions
 
-when acquired, ~1 week break, then retention probe
+When a target is acquired, a retention probe is done after about a one week break
 
 
 ## Features
-- React client
-- Node.js/Express backend
-- Sign up & login
-- Sheets, targets, probes, comments
+React client & Node.js/Express backend with signup & login, data collection (sheets, targets, probes, comments)
+
+
+## Main dependencies
+- Client: react, redux, axios, react-router, ramda, styled-components
+- Server: express, jsonwebtoken, sequelize, pg, dotenv
 
 
 ## TODO
-- set up db (aws? elephantsql?)
-- global store
-- reselect
-- logging
-- allow pdf export/print display
-- improve rest api
-- sort by last updated/last created
-- suggestion after criterium met (retention after daily streak, daily after failed retention)
+- allow other therapists edition
 - ability to add comments/notes to existing probe, and to other therapists' probes as questions?
-- auth0? (https://auth0.com/authenticate/react/google/)
+- set up db (aws? elephantsql?)
+- allow pdf export/print display
+- share with parents
+- testing
+- logging
+- reselect
+- sort by last updated/last created
 - publish app online
 - sequential "ids" for each target's comments/notes (local indices)
 - tables horizontal scrolling
 - collapsible baseline columns after first daily probe
-- allow other therapists edition
-- share with parents
-- toggle isArchived?
-- retention probe reminder after a week?
-- after retention probe failed, suggest higher criterium?
 - weekly cumulative graph for retention, with nb of targets achieved in the week (add week's total and add new point), with condition change lines?
+- suggestion after criterium met (retention after daily streak, daily after failed retention)
+- retention probe reminder after a week
+- after retention probe failed, suggest higher criterium?
+- improve rest api
+- toggle isArchived?
+- auth0? (https://auth0.com/authenticate/react/google/)
+- dark theme
 - internationalization
 - offline mode
 - https
