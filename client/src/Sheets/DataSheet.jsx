@@ -428,10 +428,10 @@ DataSheet.propTypes = {
       sheetId: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
-  user: PropTypes.objectOf(PropTypes.shape({
+  user: PropTypes.shape({
     id: PropTypes.number.isRequired,
     username: PropTypes.string.isRequired,
-  })).isRequired,
+  }).isRequired,
   targets: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,

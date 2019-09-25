@@ -280,12 +280,7 @@ TargetBlock.propTypes = {
       span: PropTypes.number.isRequired,
     }),
   ).isRequired,
-  targetCellStreaks: PropTypes.arrayOf(
-    PropTypes.shape({
-      type: PropTypes.string.isRequired,
-      span: PropTypes.number.isRequired,
-    }),
-  ).isRequired,
+  targetCellStreaks: PropTypes.arrayOf(PropTypes.number).isRequired,
   isAddingProbe: PropTypes.bool.isRequired,
   probeDraft: PropTypes.shape({
     type: PropTypes.string,
