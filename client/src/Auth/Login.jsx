@@ -26,19 +26,25 @@ class LoginBlock extends Component {
 
     return (
       <Fragment>
-        <label htmlFor="email">
-          Email:
+        <form onSubmit={(e) => {
+          onLoginConfirm(email, password);
+          e.preventDefault();
+        }}
+        >
+          <label htmlFor="email">
+            Email:
+            <br />
+            <input id="email" type="text" autoComplete="email" value={email} onChange={e => this.setState({ email: e.target.value })} />
+          </label>
           <br />
-          <input id="email" type="text" value={email} onChange={e => this.setState({ email: e.target.value })} />
-        </label>
-        <br />
-        <label htmlFor="password">
-          Password:
+          <label htmlFor="password">
+            Password:
+            <br />
+            <input id="password" type="password" autoComplete="current-password" value={password} onChange={e => this.setState({ password: e.target.value })} />
+          </label>
           <br />
-          <input id="password" type="password" value={password} onChange={e => this.setState({ password: e.target.value })} />
-        </label>
-        <br />
-        <button type="button" onClick={() => onLoginConfirm(email, password)}>Connexion</button>
+          <button type="submit">Connexion</button>
+        </form>
         <br />
         <br />
         <button type="button" onClick={onSignupOpen}>Créer un compte</button>
@@ -66,30 +72,34 @@ class SignupBlock extends Component {
     const { email, username, password } = this.state;
 
     return (
-      <Fragment>
+      <form onSubmit={(e) => {
+        onSignupConfirm(email, username, password);
+        e.preventDefault();
+      }}
+      >
         <label htmlFor="username">
           Username:
           <br />
-          <input id="username" type="text" value={username} onChange={e => this.setState({ username: e.target.value })} />
+          <input id="username" type="text" autoComplete="username" value={username} onChange={e => this.setState({ username: e.target.value })} />
         </label>
         <br />
         <label htmlFor="email">
           Email:
           <br />
-          <input id="email" type="text" value={email} onChange={e => this.setState({ email: e.target.value })} />
+          <input id="email" type="text" autoComplete="email" value={email} onChange={e => this.setState({ email: e.target.value })} />
         </label>
         <br />
         <label htmlFor="password">
           Password:
           <br />
-          <input id="password" type="password" value={password} onChange={e => this.setState({ password: e.target.value })} />
+          <input id="password" type="password" autoComplete="new-password" value={password} onChange={e => this.setState({ password: e.target.value })} />
         </label>
         <br />
-        <button type="button" onClick={() => onSignupConfirm(email, username, password)}>Inscription</button>
+        <button type="button">Inscription</button>
         <br />
         <br />
         <button type="button" onClick={onSignupClose}>Annuler</button>
-      </Fragment>
+      </form>
     );
   }
 }
