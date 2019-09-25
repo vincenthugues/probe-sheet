@@ -1,4 +1,5 @@
 import {
+  fetchAuthUser,
   fetchSheets,
   createSheet,
   fetchTargets,
@@ -12,6 +13,8 @@ import {
 /*
  * action types
  */
+
+export const GET_AUTH_USER = 'GET_AUTH_USER';
 
 export const SET_USER = 'SET_USER';
 export const SET_IS_AUTHENTICATED = 'SET_IS_AUTHENTICATED';
@@ -36,6 +39,12 @@ export const CREATE_COMMENT = 'CREATE_COMMENT';
 /*
  * action creators
  */
+
+export const getAuthUserActionCreator = user => ({ type: GET_AUTH_USER, user });
+export const getAuthUserHandler = dispatch => async () => {
+  const user = await fetchAuthUser();
+  return dispatch(getAuthUserActionCreator(user));
+};
 
 export const setUserActionCreator = user => ({ type: SET_USER, user });
 export const setIsAuthenticatedActionCreator = isAuthenticated => ({

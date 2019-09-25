@@ -4,6 +4,7 @@ import {
 } from 'ramda';
 
 import {
+  GET_AUTH_USER,
   SET_USER,
   SET_IS_AUTHENTICATED,
   GET_SHEETS,
@@ -27,6 +28,11 @@ const auth = (state = AUTH_DEFAULT_STATE, action) => {
       return {
         ...state,
         isAuthenticated: action.isAuthenticated,
+      };
+    case GET_AUTH_USER:
+      return {
+        ...state,
+        user: action.user,
       };
     case SET_USER:
       return {

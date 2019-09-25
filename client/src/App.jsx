@@ -5,7 +5,7 @@ import { Provider, connect } from 'react-redux';
 import styled from 'styled-components';
 
 import store from './store';
-import { setIsAuthenticatedActionCreator } from './actions';
+import { getAuthUserHandler, setIsAuthenticatedActionCreator } from './actions';
 import Login from './Auth/Login';
 import Logout from './Auth/Logout';
 import Admin from './Admin';
@@ -36,9 +36,10 @@ const NavLinkView = styled(Link)`
 
 class NavBar extends Component {
   componentDidMount() {
-    const { onAuth } = this.props;
+    const { onAuth, getAuthUser } = this.props;
 
     if (localStorage.getItem('token')) {
+      getAuthUser();
       onAuth();
     }
   }
@@ -64,6 +65,7 @@ class NavBar extends Component {
 NavBar.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
   onAuth: PropTypes.func.isRequired,
+  getAuthUser: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
@@ -72,6 +74,7 @@ const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
 
 const mapDispatchToProps = dispatch => ({
   onAuth: () => dispatch(setIsAuthenticatedActionCreator(true)),
+  getAuthUser: getAuthUserHandler(dispatch),
 });
 
 const AuthNavBar = connect(mapStateToProps, mapDispatchToProps)(NavBar);

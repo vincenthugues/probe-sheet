@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -33,11 +33,7 @@ class Logout extends Component {
   }
 
   render() {
-    return (
-      <Fragment>
-        <Redirect to="/login" />
-      </Fragment>
-    );
+    return <Redirect to="/login" />;
   }
 }
 Logout.propTypes = {

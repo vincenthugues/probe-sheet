@@ -22,10 +22,6 @@ import {
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
-  currentUser: {
-    id: 1,
-    name: 'John Doe',
-  },
   isAddingTarget: false,
   targetDraft: {
     name: '',
@@ -173,7 +169,7 @@ class DataSheet extends Component {
   // }
 
   getNextProbeDraft = (target, probes, targetCellStreaks) => {
-    const { currentUser } = this.state;
+    const { user } = this.props;
 
     const guessNextProbeType = ({ baselineProbesNumber, dailyProbesStreak }) => {
       if (probes.length === 0 || probes.length < baselineProbesNumber) {
@@ -198,7 +194,7 @@ class DataSheet extends Component {
     return {
       type: guessNextProbeType(target),
       date: '',
-      therapist: currentUser.name,
+      therapist: user.username,
       response: true,
       comment: '',
     };
@@ -432,6 +428,10 @@ DataSheet.propTypes = {
       sheetId: PropTypes.string.isRequired,
     }).isRequired,
   }).isRequired,
+  user: PropTypes.objectOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    username: PropTypes.string.isRequired,
+  })).isRequired,
   targets: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
@@ -442,7 +442,11 @@ DataSheet.propTypes = {
   createTarget: PropTypes.func.isRequired,
   probes: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number.isRequired,
-    // ...
+    targetId: PropTypes.number.isRequired,
+    type: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
+    therapist: PropTypes.string.isRequired,
+    response: PropTypes.bool.isRequired,
   })).isRequired,
   getProbes: PropTypes.func.isRequired,
   createProbe: PropTypes.func.isRequired,
@@ -456,9 +460,13 @@ DataSheet.propTypes = {
 };
 
 const mapStateToProps = (
-  { probeSheets: { targets, probes, comments } },
+  {
+    auth: { user },
+    probeSheets: { targets, probes, comments },
+  },
   { match: { params: { sheetId } } },
 ) => ({
+  user,
   targets: targets.filter(target => target.sheetId === Number(sheetId)),
   probes,
   comments,
