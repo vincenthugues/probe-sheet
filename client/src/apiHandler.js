@@ -135,7 +135,6 @@ export const fetchTargets = async (sheetId) => {
   try {
     const { data: targets } = await axios.get(`${SERVER_URL}/targets${sheetId ? `?sheetId=${sheetId}` : ''}`, getHeadersConfig());
 
-    // return targets.filter(({ sheetId: targetSheetId }) => targetSheetId === sheetId);
     return targets;
   } catch (err) {
     console.error('error fetching targets', err);
@@ -191,9 +190,9 @@ export const createTarget = async (draft) => {
 // PROBES
 // ////////////////
 
-export const fetchProbes = async () => { // TODO: handle targetId
+export const fetchProbes = async (targetId) => {
   try {
-    const { data: probes } = await axios.get(`${SERVER_URL}/probes`, getHeadersConfig());
+    const { data: probes } = await axios.get(`${SERVER_URL}/probes${targetId ? `?targetId=${targetId}` : ''}`, getHeadersConfig());
 
     return probes;
   } catch (err) {

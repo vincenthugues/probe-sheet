@@ -12,19 +12,25 @@ router.get('/', auth, async (req, res) => {
       ...sheetId ? { sheetId } : {},
     },
   });
+
   return res.send(targets);
 });
 
 router.post('/', auth, async (req, res) => {
-  const target = await req.context.models.Target.create({
-    name: req.body.name,
-    baselineProbesNumber: req.body.baselineProbesNumber,
-    dailyProbesStreak: req.body.dailyProbesStreak,
-    ownerId: req.user.id,
-    sheetId: req.body.sheetId,
-  });
+  try {
+    const target = await req.context.models.Target.create({
+      name: req.body.name,
+      baselineProbesNumber: req.body.baselineProbesNumber,
+      dailyProbesStreak: req.body.dailyProbesStreak,
+      ownerId: req.user.id,
+      sheetId: req.body.sheetId,
+    });
 
-  return res.send(target);
+    return res.send(target);
+  } catch (err) {
+    console.log('Error while creating target:', err);
+    return res.send(err);
+  }
 });
 
 router.delete('/:targetId', auth, async (req, res) => {

@@ -6,9 +6,13 @@ import { isEmpty, update } from 'ramda';
 // import C3Chart from 'react-c3js';
 
 import {
-  fetchProbes, createProbe, fetchComments, createComment,
-} from '../apiHandler';
-import { getTargetsHandler, createTargetHandler } from '../actions';
+  getTargetsHandler,
+  createTargetHandler,
+  getProbesHandler,
+  createProbeHandler,
+  getCommentsHandler,
+  createCommentHandler,
+} from '../actions';
 import {
   DEFAULT_BASELINE_PROBES,
   DEFAULT_DAILY_PROBES_STREAK,
@@ -18,9 +22,6 @@ import {
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
-  probes: [],
-  comments: [],
-
   currentUser: {
     id: 1,
     name: 'John Doe',
@@ -100,25 +101,22 @@ class DataSheet extends Component {
   }
 
   async componentDidMount() {
-    const { match, getTargets } = this.props;
+    const {
+      match, getTargets, getProbes, getComments,
+    } = this.props;
     const sheetId = Number(match.params.sheetId);
 
     await getTargets(sheetId);
-    const probes = await fetchProbes();
-    const comments = await fetchComments();
-
-    this.setState({
-      probes,
-      comments,
-    });
+    await getProbes();
+    await getComments();
 
     this.computeTargetsMetadata();
   }
 
   onOpenAddNewProbe = (selectedTargetId) => {
-    const { targets } = this.props;
+    const { targets, probes } = this.props;
 
-    this.setState(({ probes, targetsCellStreaks }) => ({
+    this.setState(({ targetsCellStreaks }) => ({
       isAddingProbe: true,
       addingProbeToTargetId: selectedTargetId,
       probeDraft: this.getNextProbeDraft(
@@ -130,35 +128,21 @@ class DataSheet extends Component {
   }
 
   onConfirmAddNewProbe = async (probeDraft, currentTargetId) => {
-    const newProbe = await createProbe({
+    const { createProbe, createComment } = this.props;
+    const { probe } = await createProbe({
       ...probeDraft, // type, date, therapist, response, comment
       targetId: currentTargetId, // TODO
     });
+
     if (probeDraft.comment) {
-      const newComment = await createComment(probeDraft.comment, newProbe.id);
-      this.setState(state => ({
-        comments: [
-          ...state.comments,
-          newComment,
-        ],
-      }));
+      await createComment(probeDraft.comment, probe.id);
     }
 
-    this.setState(state => ({
-      probes: [
-        ...state.probes,
-        newProbe,
-      ],
-      isAddingProbe: false,
-    }));
+    this.setState({ isAddingProbe: false });
     this.computeTargetsMetadata();
   }
 
-  onCancelAddNewProbe = () => {
-    this.setState({
-      isAddingProbe: false,
-    });
-  }
+  onCancelAddNewProbe = () => this.setState({ isAddingProbe: false })
 
   onAddNewTarget = async () => {
     const { match, createTarget } = this.props;
@@ -166,7 +150,7 @@ class DataSheet extends Component {
 
     await createTarget({
       ...targetDraft,
-      creationDate: Date.now(),
+      // creationDate: Date.now(),
       ownerId: 1, // TODO
       sheetId: match.params.sheetId,
     });
@@ -222,8 +206,7 @@ class DataSheet extends Component {
 
   // TODO: cleanup
   computeTargetsMetadata = () => {
-    const { targets } = this.props;
-    const { probes } = this.state;
+    const { targets, probes } = this.props;
 
     const targetsTableHeaders = targets.reduce((acc1, { id }) => {
       const targetProbes = probes.filter(({ targetId }) => targetId === id);
@@ -311,10 +294,8 @@ class DataSheet extends Component {
   }
 
   render() {
-    const { targets } = this.props;
+    const { targets, probes, comments } = this.props;
     const {
-      probes,
-      comments,
       isAddingTarget,
       targetDraft,
       isAddingProbe,
@@ -459,15 +440,37 @@ DataSheet.propTypes = {
   })).isRequired,
   getTargets: PropTypes.func.isRequired,
   createTarget: PropTypes.func.isRequired,
+  probes: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    // ...
+  })).isRequired,
+  getProbes: PropTypes.func.isRequired,
+  createProbe: PropTypes.func.isRequired,
+  comments: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    probeId: PropTypes.number.isRequired,
+    text: PropTypes.string.isRequired,
+  })).isRequired,
+  getComments: PropTypes.func.isRequired,
+  createComment: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = ({ probeSheets: { targets } }) => ({
-  targets,
+const mapStateToProps = (
+  { probeSheets: { targets, probes, comments } },
+  { match: { params: { sheetId } } },
+) => ({
+  targets: targets.filter(target => target.sheetId === Number(sheetId)),
+  probes,
+  comments,
 });
 
 const mapDispatchToProps = dispatch => ({
   getTargets: getTargetsHandler(dispatch),
   createTarget: createTargetHandler(dispatch),
+  getProbes: getProbesHandler(dispatch),
+  createProbe: createProbeHandler(dispatch),
+  getComments: getCommentsHandler(dispatch),
+  createComment: createCommentHandler(dispatch),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(DataSheet);

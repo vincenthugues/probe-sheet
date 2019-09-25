@@ -5,11 +5,14 @@ import auth from '../middleware/auth';
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
+  const { query: { targetId } } = req;
   const probes = await req.context.models.Probe.findAll({
     where: {
       ownerId: req.user.id,
+      ...targetId ? { targetId } : {},
     },
   });
+
   return res.send(probes);
 });
 
@@ -38,6 +41,7 @@ router.get('/:probeId', auth, async (req, res) => {
       ownerId: req.user.id,
     },
   });
+
   return res.send(probe);
 });
 

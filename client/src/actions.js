@@ -1,5 +1,12 @@
 import {
-  fetchSheets, createSheet, fetchTargets, createTarget,
+  fetchSheets,
+  createSheet,
+  fetchTargets,
+  createTarget,
+  fetchProbes,
+  createProbe,
+  fetchComments,
+  createComment,
 } from './apiHandler';
 
 /*
@@ -14,6 +21,12 @@ export const CREATE_SHEET = 'CREATE_SHEET';
 
 export const GET_TARGETS = 'GET_TARGETS';
 export const CREATE_TARGET = 'CREATE_TARGET';
+
+export const GET_PROBES = 'GET_PROBES';
+export const CREATE_PROBE = 'CREATE_PROBE';
+
+export const GET_COMMENTS = 'GET_COMMENTS';
+export const CREATE_COMMENT = 'CREATE_COMMENT';
 
 /*
  * other constants
@@ -64,4 +77,40 @@ const createTargetActionCreator = target => ({
 export const createTargetHandler = dispatch => async (targetDraft) => {
   const target = await createTarget(targetDraft);
   return dispatch(createTargetActionCreator(target));
+};
+
+const getProbesActionCreator = probes => ({
+  type: GET_PROBES,
+  probes,
+});
+export const getProbesHandler = dispatch => async (targetId) => {
+  const probes = await fetchProbes(targetId);
+  return dispatch(getProbesActionCreator(probes));
+};
+
+const createProbeActionCreator = probe => ({
+  type: CREATE_PROBE,
+  probe,
+});
+export const createProbeHandler = dispatch => async (probeDraft) => {
+  const probe = await createProbe(probeDraft);
+  return dispatch(createProbeActionCreator(probe));
+};
+
+const getCommentsActionCreator = comments => ({
+  type: GET_COMMENTS,
+  comments,
+});
+export const getCommentsHandler = dispatch => async (probeId) => {
+  const comments = await fetchComments(probeId);
+  return dispatch(getCommentsActionCreator(comments));
+};
+
+const createCommentActionCreator = comment => ({
+  type: CREATE_COMMENT,
+  comment,
+});
+export const createCommentHandler = dispatch => async (text, probeId) => {
+  const comment = await createComment(text, probeId);
+  return dispatch(createCommentActionCreator(comment));
 };
