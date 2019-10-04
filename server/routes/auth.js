@@ -11,7 +11,6 @@ router.post('/', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      console.log('Missing required field(s)');
       return res.status(400).json({
         msg: 'Missing required field(s)',
       });
@@ -19,7 +18,6 @@ router.post('/', async (req, res) => {
 
     const existingUser = await req.context.models.User.findOne({ where: { email } });
     if (!existingUser) {
-      console.log('User not found');
       return res.status(400).json({
         msg: 'User not found',
       });
@@ -27,14 +25,16 @@ router.post('/', async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
     if (!passwordMatch) {
-      console.log('Invalid credentials');
       return res.status(400).json({
         msg: 'Invalid credentials',
       });
     }
 
     jwt.sign(
-      { id: existingUser.id },
+      {
+        id: existingUser.id,
+        email,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: 24 * 3600,
@@ -75,6 +75,7 @@ router.get('/user', auth, async (req, res) => {
         ],
       },
     );
+
     return res.send(user);
   } catch (err) {
     console.log('error:', err);

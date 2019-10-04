@@ -1,19 +1,30 @@
 import express from 'express';
+import { Op } from 'sequelize';
 
 import auth from '../middleware/auth';
+import { getAllowedTargetIds } from './utils';
 
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
-  const { query: { targetId } } = req;
-  const probes = await req.context.models.Probe.findAll({
-    where: {
-      ownerId: req.user.id,
-      ...targetId ? { targetId } : {},
-    },
-  });
+  try {
+    const { query: { targetId: queryTargetId } } = req;
+    const allowedTargetIds = await getAllowedTargetIds(req);
+    const probes = await req.context.models.Probe.findAll({
+      where: {
+        [Op.or]: [
+          { ownerId: req.user.id },
+          { targetId: { [Op.in]: allowedTargetIds } },
+        ],
+        ...queryTargetId ? { targetId: queryTargetId } : {},
+      },
+    });
 
-  return res.send(probes);
+    return res.send(probes);
+  } catch (err) {
+    console.log('Error while getting probes:', err);
+    return res.status(400).send(err);
+  }
 });
 
 router.post('/', auth, async (req, res) => {
@@ -24,25 +35,35 @@ router.post('/', auth, async (req, res) => {
       response: req.body.response,
       therapist: req.body.therapist,
       ownerId: req.user.id,
+      // TODO: check target belongs to user or user is allowed on target's sheet
       targetId: req.body.targetId,
     });
 
     return res.send(probe);
   } catch (err) {
     console.log('Error while creating probe:', err);
-    return res.send(err);
+    return res.status(400).send(err);
   }
 });
 
 router.get('/:probeId', auth, async (req, res) => {
-  const probe = await req.context.models.Probe.findOne({
-    where: {
-      id: req.params.probeId,
-      ownerId: req.user.id,
-    },
-  });
+  try {
+    const allowedTargetIds = await getAllowedTargetIds(req);
+    const probe = await req.context.models.Probe.findOne({
+      where: {
+        id: req.params.probeId,
+        [Op.or]: [
+          { ownerId: req.user.id },
+          { targetId: { [Op.in]: allowedTargetIds } },
+        ],
+      },
+    });
 
-  return res.send(probe);
+    return res.send(probe);
+  } catch (err) {
+    console.log('Error while getting probe:', err);
+    return res.status(400).send(err);
+  }
 });
 
 module.exports = router;

@@ -67,16 +67,19 @@ router.post('/', async (req, res) => {
 
     return res.status(200);
   } catch (err) {
-    console.log('error:', err);
-    return res.status(400).json({
-      msg: 'An error occurred while creating the user',
-    });
+    console.log('Error while creating user:', err);
+    return res.status(400).send(err);
   }
 });
 
 router.get('/:userId', auth, async (req, res) => {
-  const user = await req.context.models.User.findByPk(req.params.userId);
-  return res.send(user);
+  try {
+    const user = await req.context.models.User.findByPk(req.params.userId);
+    return res.send(user);
+  } catch (err) {
+    console.log('Error while getting user:', err);
+    return res.status(400).send(err);
+  }
 });
 
 module.exports = router;
