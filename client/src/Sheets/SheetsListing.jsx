@@ -33,6 +33,14 @@ const NewSheetBlockView = styled.div`
   flex-direction: column;
 `;
 
+const SheetsGroupView = styled.div`
+  display: flex;
+  flex: 1 0 auto;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  padding: 10px;
+`;
+
 const NewSheetBlock = ({ sheetDraft: { student, skillDomain }, onFieldUpdate, children }) => (
   <NewSheetBlockView>
     <label htmlFor="student">
@@ -158,7 +166,7 @@ class SheetsListing extends Component {
   }
 
   render() {
-    const { isAuthenticated, sheets } = this.props;
+    const { isAuthenticated, userId, sheets } = this.props;
     const {
       students,
       skillDomains,
@@ -169,6 +177,14 @@ class SheetsListing extends Component {
     } = this.state;
 
     if (!isAuthenticated) return <Redirect to="/login" />;
+
+    const ownedSheetIds = filteredSheetIds.filter((id) => {
+      const matchedSheet = sheets.find(sheet => sheet.id === id);
+      return matchedSheet.ownerId === userId;
+    });
+    const sharedSheetIds = filteredSheetIds.filter(id => (
+      (sheets.find(sheet => sheet.id === id)).ownerId !== userId
+    ));
 
     return (
       <Fragment>
@@ -191,15 +207,9 @@ class SheetsListing extends Component {
           </button>
         </FiltersView>
 
-        <div style={{
-          display: 'flex',
-          flex: '1 0 auto',
-          flexFlow: 'row wrap',
-          justifyContent: 'space-around',
-          padding: '10px',
-        }}
-        >
-          {filteredSheetIds.map((sheetId) => {
+        <h3>Owned</h3>
+        <SheetsGroupView>
+          {ownedSheetIds.map((sheetId) => {
             const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
 
             return (
@@ -234,23 +244,43 @@ class SheetsListing extends Component {
               </button>
             )}
           </SheetView>
-        </div>
+        </SheetsGroupView>
+        <h3>Shared with me</h3>
+        <SheetsGroupView>
+          {sharedSheetIds.map((sheetId) => {
+            const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
+
+            return (
+              <LinkView key={sheetId} to={`/datasheet/${sheetId}`}>
+                <SheetView>
+                  <div>{student}</div>
+                  <div>{skillDomain}</div>
+                </SheetView>
+              </LinkView>
+            );
+          })}
+        </SheetsGroupView>
       </Fragment>
     );
   }
 }
 SheetsListing.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
+  userId: PropTypes.number,
   sheets: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   getSheets: PropTypes.func.isRequired,
   createSheet: PropTypes.func.isRequired,
 };
+SheetsListing.defaultProps = {
+  userId: null,
+};
 
 const mapStateToProps = ({
-  auth: { isAuthenticated },
+  auth: { isAuthenticated, user },
   probeSheets: { sheets },
 }) => ({
   isAuthenticated,
+  userId: user ? user.id : null,
   sheets,
 });
 

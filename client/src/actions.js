@@ -2,6 +2,8 @@ import {
   fetchAuthUser,
   fetchSheets,
   createSheet,
+  fetchSheetAccessRights,
+  createSheetAccessRight,
   fetchTargets,
   createTarget,
   fetchProbes,
@@ -23,6 +25,8 @@ export const SET_IS_AUTHENTICATED = 'SET_IS_AUTHENTICATED';
 
 export const GET_SHEETS = 'GET_SHEETS';
 export const CREATE_SHEET = 'CREATE_SHEET';
+export const GET_SHEET_ACCESS_RIGHTS = 'GET_SHEET_ACCESS_RIGHTS';
+export const CREATE_SHEET_ACCESS_RIGHT = 'CREATE_SHEET_ACCESS_RIGHT';
 
 export const GET_TARGETS = 'GET_TARGETS';
 export const CREATE_TARGET = 'CREATE_TARGET';
@@ -77,6 +81,26 @@ const createSheetActionCreator = sheet => ({
 export const createSheetHandler = dispatch => async (sheetDraft) => {
   const sheet = await createSheet(sheetDraft);
   return dispatch(createSheetActionCreator(sheet));
+};
+
+const getSheetAccessRightsActionCreator = (sheetId, accessRights) => ({
+  type: GET_SHEET_ACCESS_RIGHTS,
+  sheetId,
+  accessRights,
+});
+export const getSheetAccessRightsHandler = dispatch => async (sheetId) => {
+  const accessRights = await fetchSheetAccessRights(sheetId);
+  return dispatch(getSheetAccessRightsActionCreator(sheetId, accessRights));
+};
+
+const createSheetAccessRightActionCreator = (sheetId, accessRight) => ({
+  type: CREATE_SHEET_ACCESS_RIGHT,
+  sheetId,
+  accessRight,
+});
+export const createSheetAccessRightHandler = dispatch => async (sheetId, email, role) => {
+  const accessRight = await createSheetAccessRight(sheetId, email, role);
+  return dispatch(createSheetAccessRightActionCreator(sheetId, accessRight));
 };
 
 const getTargetsActionCreator = targets => ({

@@ -6,6 +6,8 @@ import { isEmpty, update } from 'ramda';
 // import C3Chart from 'react-c3js';
 
 import {
+  getSheetAccessRightsHandler,
+  createSheetAccessRightHandler,
   getTargetsHandler,
   createTargetHandler,
   getProbesHandler,
@@ -19,6 +21,7 @@ import {
   PROBE_TYPE,
   TARGETS_AUTO_ARCHIVING,
 } from '../constants';
+import Contributors from './Contributors';
 import TargetBlock from './TargetBlock';
 
 const INITIAL_STATE = {
@@ -98,10 +101,10 @@ class DataSheet extends Component {
 
   async componentDidMount() {
     const {
-      match, getTargets, getProbes, getComments,
+      getSheetAccessRights, getTargets, getProbes, getComments, sheetId,
     } = this.props;
-    const sheetId = Number(match.params.sheetId);
 
+    await getSheetAccessRights(sheetId);
     await getTargets(sheetId);
     await getProbes();
     await getComments();
@@ -127,7 +130,7 @@ class DataSheet extends Component {
     const { createProbe, createComment } = this.props;
     const { probe } = await createProbe({
       ...probeDraft, // type, date, therapist, response, comment
-      targetId: currentTargetId, // TODO
+      targetId: currentTargetId,
     });
 
     if (probeDraft.comment) {
@@ -141,14 +144,13 @@ class DataSheet extends Component {
   onCancelAddNewProbe = () => this.setState({ isAddingProbe: false })
 
   onAddNewTarget = async () => {
-    const { match, createTarget } = this.props;
+    const { user, createTarget, sheetId } = this.props;
     const { targetDraft } = this.state;
 
     await createTarget({
       ...targetDraft,
-      // creationDate: Date.now(),
-      ownerId: 1, // TODO
-      sheetId: match.params.sheetId,
+      ownerId: user.id,
+      sheetId,
     });
 
     this.setState({ isAddingTarget: false });
@@ -290,7 +292,9 @@ class DataSheet extends Component {
   }
 
   render() {
-    const { targets, probes, comments } = this.props;
+    const {
+      sheetAccessRights, createSheetAccessRight, targets, probes, comments, sheetId,
+    } = this.props;
     const {
       isAddingTarget,
       targetDraft,
@@ -308,6 +312,12 @@ class DataSheet extends Component {
         <div style={{ fontSize: '1rem' }}>
           <div>Elève : J.D.</div>
           <div>Domaine de compétence : language réceptif</div>
+          <br />
+          <Contributors
+            sheetAccessRights={sheetAccessRights}
+            createSheetAccessRight={createSheetAccessRight}
+            sheetId={sheetId}
+          />
         </div>
 
         {targets.filter(
@@ -423,15 +433,13 @@ class DataSheet extends Component {
   }
 }
 DataSheet.propTypes = {
-  match: PropTypes.shape({
-    params: PropTypes.shape({
-      sheetId: PropTypes.string.isRequired,
-    }).isRequired,
-  }).isRequired,
   user: PropTypes.shape({
     id: PropTypes.number.isRequired,
     username: PropTypes.string.isRequired,
   }).isRequired,
+  sheetAccessRights: PropTypes.arrayOf(PropTypes.shape()).isRequired,
+  getSheetAccessRights: PropTypes.func.isRequired,
+  createSheetAccessRight: PropTypes.func.isRequired,
   targets: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
@@ -457,22 +465,29 @@ DataSheet.propTypes = {
   })).isRequired,
   getComments: PropTypes.func.isRequired,
   createComment: PropTypes.func.isRequired,
+  sheetId: PropTypes.number.isRequired,
 };
 
 const mapStateToProps = (
   {
     auth: { user },
-    probeSheets: { targets, probes, comments },
+    probeSheets: {
+      sheetsAccessRights, targets, probes, comments,
+    },
   },
   { match: { params: { sheetId } } },
 ) => ({
   user,
+  sheetAccessRights: sheetsAccessRights[sheetId] || [],
   targets: targets.filter(target => target.sheetId === Number(sheetId)),
   probes,
   comments,
+  sheetId: Number(sheetId),
 });
 
 const mapDispatchToProps = dispatch => ({
+  getSheetAccessRights: getSheetAccessRightsHandler(dispatch),
+  createSheetAccessRight: createSheetAccessRightHandler(dispatch),
   getTargets: getTargetsHandler(dispatch),
   createTarget: createTargetHandler(dispatch),
   getProbes: getProbesHandler(dispatch),

@@ -40,16 +40,16 @@ const Td = styled.td`
 `;
 
 const AddProbeButtonView = styled.button`
-height: 32px;
-width: 40px;
+  height: 32px;
+  width: 40px;
 
-font-size: 1.4rem;
-margin: auto 24px;
+  font-size: 1.4rem;
+  margin: auto 24px;
 `;
 
 const CommentsView = styled.div`
-text-align: left;
-margin-left: 1em;
+  text-align: left;
+  margin-left: 1em;
 `;
 
 const ProbeTd = ({
@@ -73,11 +73,11 @@ const ProbeTd = ({
     <Td style={{ backgroundColor: getBackgroundColor() }}>
       {response ? 'Oui' : 'Non'}
       {commentText && (
-      <sup title={commentText}>
-        [
-          {commentId}
-        ]
-      </sup>
+        <sup title={commentText}>
+          [
+            {commentId}
+          ]
+        </sup>
       )}
     </Td>
   );

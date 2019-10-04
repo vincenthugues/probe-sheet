@@ -127,6 +127,32 @@ export const createSheet = async (draft) => {
   }
 };
 
+export const fetchSheetAccessRights = async (sheetId) => {
+  try {
+    const { data: accessRights } = await axios.get(`${SERVER_URL}/sheets/${sheetId}/access-rights`, getHeadersConfig());
+
+    return accessRights;
+  } catch (err) {
+    console.error("error fetching sheet's access rights", err);
+    throw err;
+  }
+};
+
+export const createSheetAccessRight = async (sheetId, email, role) => {
+  try {
+    const { data: accessRight } = await axios.post(
+      `${SERVER_URL}/sheets/${sheetId}/access-rights`,
+      { sheetId, email, role },
+      getHeadersConfig(),
+    );
+
+    return accessRight;
+  } catch (err) {
+    console.error("error creating sheet's access right", err);
+    throw err;
+  }
+};
+
 // ////////////////
 // TARGETS
 // ////////////////

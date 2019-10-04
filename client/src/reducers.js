@@ -10,6 +10,8 @@ import {
   SET_IS_AUTHENTICATED,
   GET_SHEETS,
   CREATE_SHEET,
+  GET_SHEET_ACCESS_RIGHTS,
+  CREATE_SHEET_ACCESS_RIGHT,
   GET_TARGETS,
   CREATE_TARGET,
   GET_PROBES,
@@ -47,6 +49,7 @@ const auth = (state = AUTH_DEFAULT_STATE, action) => {
 
 const PROBESHEETS_DEFAULT_STATE = {
   sheets: [],
+  sheetsAccessRights: {},
   targets: [],
   probes: [],
   comments: [],
@@ -81,6 +84,25 @@ const probeSheets = (state = PROBESHEETS_DEFAULT_STATE, action) => {
       return {
         ...state,
         sheets: [...state.sheets, action.sheet],
+      };
+    case GET_SHEET_ACCESS_RIGHTS:
+      return {
+        ...state,
+        sheetsAccessRights: {
+          ...state.sheetsAccessRights,
+          [action.sheetId]: action.accessRights,
+        },
+      };
+    case CREATE_SHEET_ACCESS_RIGHT:
+      return {
+        ...state,
+        sheetsAccessRights: {
+          ...state.sheetsAccessRights,
+          [action.sheetId]: [
+            ...state.sheetsAccessRights[action.sheetId],
+            action.accessRight,
+          ],
+        },
       };
     case GET_TARGETS:
       return {
