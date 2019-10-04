@@ -9,9 +9,14 @@ const PROBE_TYPE = {
 
 const users = [
   {
-    email: 'test@email.com',
-    password: '123',
     username: 'Jane Doe',
+    email: 'jane@example.com',
+    password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
+  },
+  {
+    username: 'John Doe',
+    email: 'john@example.com',
+    password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
   },
 ];
 
@@ -159,10 +164,29 @@ const comments = [
   },
 ];
 
+// ACCES_RIGHTS
+// email
+// role (enum)
+// // sheetId (Sheet)
+
+const accessRights = [
+  {
+    email: 'john@example.com',
+    role: 'contributor',
+    sheetId: 1,
+  },
+  {
+    email: 'john@example.com',
+    role: 'viewer',
+    sheetId: 2,
+  },
+];
+
 export default {
   users,
   sheets,
   targets,
   probes,
   comments,
+  accessRights,
 };

@@ -29,14 +29,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(async (req, res, next) => {
   req.context = {
     models,
-    user: await models.User.findByLogin('John Doe'),
   };
   next();
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../client/build/index.html')));
 
-app.get('/session', async (req, res) => res.send(req.context.user));
 app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 app.use('/sheets', sheetsRouter);
@@ -50,21 +48,16 @@ if (app.get('env') === 'development') {
 }
 
 const seedDatabase = async () => {
-  await models.User.create(
-    {
-      username: 'John Doe',
-      email: 'john.doe@example.com',
-      password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
-      sheets: mockData.sheets,
-    },
-    {
-      include: [models.Sheet],
-    },
-  );
-
-  await models.Target.bulkCreate(mockData.targets);
-  await models.Probe.bulkCreate(mockData.probes);
-  await models.Comment.bulkCreate(mockData.comments);
+  try {
+    await models.User.bulkCreate(mockData.users);
+    await models.Sheet.bulkCreate(mockData.sheets);
+    await models.Target.bulkCreate(mockData.targets);
+    await models.Probe.bulkCreate(mockData.probes);
+    await models.Comment.bulkCreate(mockData.comments);
+    await models.AccessRight.bulkCreate(mockData.accessRights);
+  } catch (err) {
+    console.log('error while seeding database:', err.message);
+  }
 };
 
 sequelize.sync({ force: process.env.ERASE_DB_ON_SYNC }).then(() => {

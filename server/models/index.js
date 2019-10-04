@@ -15,6 +15,7 @@ const models = {
   Target: sequelize.import('./target'),
   Probe: sequelize.import('./probe'),
   Comment: sequelize.import('./comment'),
+  AccessRight: sequelize.import('./accessRight'),
 };
 
 Object.keys(models).forEach((key) => {
