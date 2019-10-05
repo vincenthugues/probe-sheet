@@ -6,6 +6,7 @@ import { isEmpty } from 'ramda';
 import styled from 'styled-components';
 
 import { getSheetsHandler, createSheetHandler } from '../actions';
+import { getFilteredSheetIds } from './utils';
 
 const FiltersView = styled.div`
   display: flex;
@@ -112,7 +113,7 @@ class SheetsListing extends Component {
       students: [],
       skillDomains: [],
     });
-    const filteredSheetIds = this.getFilteredSheetIds(sheets);
+    const filteredSheetIds = getFilteredSheetIds(sheets);
 
     this.setState({
       students,
@@ -120,11 +121,6 @@ class SheetsListing extends Component {
       filteredSheetIds,
     });
   }
-
-  getFilteredSheetIds = (sheets, filters = {}) => sheets
-    .filter(({ student }) => !filters.student || student === filters.student)
-    .filter(({ skillDomain }) => !filters.skillDomain || skillDomain === filters.skillDomain)
-    .map(({ id }) => id);
 
   updateFilters = (filter, value) => {
     const { filters, sheets } = this.state;
@@ -135,7 +131,7 @@ class SheetsListing extends Component {
 
     this.setState({
       filters: newFilters,
-      filteredSheetIds: this.getFilteredSheetIds(sheets, newFilters),
+      filteredSheetIds: getFilteredSheetIds(sheets, newFilters),
     });
   };
 
@@ -148,7 +144,7 @@ class SheetsListing extends Component {
 
     this.setState({
       filters,
-      filteredSheetIds: this.getFilteredSheetIds(sheets, filters),
+      filteredSheetIds: getFilteredSheetIds(sheets, filters),
     });
   };
 

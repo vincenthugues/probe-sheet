@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
 import { isEmpty, update } from 'ramda';
-// import C3Chart from 'react-c3js';
 
 import {
   getSheetAccessRightsHandler,
@@ -21,8 +20,10 @@ import {
   PROBE_TYPE,
   TARGETS_AUTO_ARCHIVING,
 } from '../constants';
+import { guessNextProbeType } from './utils';
 import Contributors from './Contributors';
-import TargetBlock from './TargetBlock';
+import TargetsList from './TargetsList';
+import NewTargetBlock from './NewTargetBlock';
 
 const INITIAL_STATE = {
   isAddingTarget: false,
@@ -35,47 +36,6 @@ const INITIAL_STATE = {
 
   targetsTableHeaders: {},
   targetCellStreaks: {},
-};
-
-const NewTargetBlockView = styled.div`
-  display: flex;
-  flex: 0 1 auto;
-  flex-direction: column;
-
-  margin: 16px auto;
-  width: 20em;
-  border: 1px dashed;
-`;
-
-const NewTargetBlock = ({
-  targetDraft: { name, baselineProbesNumber, dailyProbesStreak },
-  onFieldUpdate,
-  children,
-}) => (
-  <NewTargetBlockView>
-    <label htmlFor="name">
-      Cible
-      <input id="name" value={name} onChange={({ target: { value } }) => onFieldUpdate('name', value)} />
-    </label>
-    <label htmlFor="baselineProbesNumber">
-      Baseline #
-      <input id="baselineProbesNumber" value={baselineProbesNumber} onChange={({ target: { value } }) => onFieldUpdate('baselineProbesNumber', value)} />
-    </label>
-    <label htmlFor="dailyProbesStreak">
-      Daily streak #
-      <input id="dailyProbesStreak" value={dailyProbesStreak} onChange={({ target: { value } }) => onFieldUpdate('dailyProbesStreak', value)} />
-    </label>
-    {children}
-  </NewTargetBlockView>
-);
-NewTargetBlock.propTypes = {
-  targetDraft: PropTypes.shape({
-    name: PropTypes.string,
-    baselineProbesNumber: PropTypes.number,
-    dailyProbesStreak: PropTypes.number,
-  }).isRequired,
-  onFieldUpdate: PropTypes.func.isRequired,
-  children: PropTypes.node.isRequired,
 };
 
 const SeparatorView = styled.div`
@@ -172,29 +132,10 @@ class DataSheet extends Component {
 
   getNextProbeDraft = (target, probes, targetCellStreaks) => {
     const { user } = this.props;
-
-    const guessNextProbeType = ({ baselineProbesNumber, dailyProbesStreak }) => {
-      if (probes.length === 0 || probes.length < baselineProbesNumber) {
-        return PROBE_TYPE.BASELINE;
-      }
-
-      const prevProbe = probes[probes.length - 1];
-      const prevStreak = targetCellStreaks[probes.length - 1];
-      if (prevProbe.type === PROBE_TYPE.BASELINE && prevStreak >= baselineProbesNumber) {
-        return PROBE_TYPE.DAILY;
-      }
-      if (prevProbe.type === PROBE_TYPE.DAILY && prevStreak >= dailyProbesStreak) {
-        return PROBE_TYPE.RETENTION;
-      }
-      if (prevProbe.type === PROBE_TYPE.RETENTION && prevProbe.response === false) {
-        return PROBE_TYPE.DAILY;
-      }
-
-      return PROBE_TYPE.DAILY;
-    };
+    const { baselineProbesNumber, dailyProbesStreak } = target;
 
     return {
-      type: guessNextProbeType(target),
+      type: guessNextProbeType(baselineProbesNumber, dailyProbesStreak, targetCellStreaks, probes),
       date: '',
       therapist: user.username,
       response: true,
@@ -304,6 +245,12 @@ class DataSheet extends Component {
       targetsTableHeaders,
       targetsCellStreaks,
     } = this.state;
+    const activeTargets = targets.filter(
+      ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
+    );
+    const archivedTargets = targets.filter(
+      ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived,
+    );
 
     return (
       <Fragment>
@@ -320,36 +267,21 @@ class DataSheet extends Component {
           />
         </div>
 
-        {targets.filter(
-          ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
-        ).map((target) => {
-          const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
-          const targetComments = comments.filter(({ probeId }) => (
-            targetProbes.find(({ id }) => id === probeId)
-          ));
-
-          return (
-            <TargetBlock
-              key={target.id}
-              target={target}
-              targetTableHeaders={targetsTableHeaders[target.id]}
-              targetCellStreaks={targetsCellStreaks[target.id]}
-              probes={targetProbes}
-              isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
-              probeDraft={probeDraft}
-              onProbeDraftUpdate={(fieldName, value) => this.setState({
-                probeDraft: {
-                  ...probeDraft,
-                  [fieldName]: value,
-                },
-              })}
-              onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
-              onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
-              onCancelAddNewProbe={this.onCancelAddNewProbe}
-              comments={targetComments}
-            />
-          );
-        })}
+        <TargetsList
+          targets={activeTargets}
+          probes={probes}
+          comments={comments}
+          targetsTableHeaders={targetsTableHeaders}
+          targetsCellStreaks={targetsCellStreaks}
+          isAddingProbe={isAddingProbe}
+          addingProbeToTargetId={addingProbeToTargetId}
+          probeDraft={probeDraft}
+          onProbeDraftUpdate={newDraft => this.setState({ probeDraft: newDraft })}
+          onOpenAddNewProbe={this.onOpenAddNewProbe}
+          onConfirmAddNewProbe={this.onConfirmAddNewProbe}
+          onCancelAddNewProbe={this.onCancelAddNewProbe}
+          onUnarchiveTarget={this.onUnarchiveTarget}
+        />
         <br />
 
         {isAddingTarget ? (
@@ -379,55 +311,14 @@ class DataSheet extends Component {
 
         <SeparatorView />
 
-        {targets.filter(
-          ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived,
-        ).map((target) => {
-          const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
-          const targetComments = comments.filter(({ probeId }) => (
-            targetProbes.find(({ id }) => id === probeId)
-          ));
-
-          return (
-            <TargetBlock
-              key={target.id}
-              target={target}
-              targetTableHeaders={targetsTableHeaders[target.id]}
-              targetCellStreaks={targetsCellStreaks[target.id]}
-              probes={targetProbes}
-              isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
-              probeDraft={probeDraft}
-              onProbeDraftUpdate={(fieldName, value) => this.setState({
-                probeDraft: {
-                  ...probeDraft,
-                  [fieldName]: value,
-                },
-              })}
-              // onOpenAddNewProbe={() => this.onOpenAddNewProbe(target.id)}
-              // onConfirmAddNewProbe={() => this.onConfirmAddNewProbe(probeDraft, target.id)}
-              // onCancelAddNewProbe={this.onCancelAddNewProbe}
-              comments={targetComments}
-              onUnarchive={() => this.onUnarchiveTarget(target.id)}
-              isArchived
-            />
-          );
-        })}
-
-        {/* <C3Chart
-          style={{ maxWidth: '60%', margin: '40px auto' }}
-          data={{
-            labels: true,
-            padding: { left: 0, right: 0 },
-            axis: {
-              x: { min: 1, padding: { left: 0 }, tick: { outer: false } },
-              y: { min: 0, padding: { bottom: 0 }, tick: { outer: false } },
-            },
-            columns: [
-              ['Semaine', 1, 2, 3, 4, 5, 6],
-              ['Cibles retenues', 0, 4, 6, 9, 12, 13],
-            ],
-            x: 'Semaine',
-          }}
-        /> */}
+        <TargetsList
+          targets={archivedTargets}
+          probes={probes}
+          comments={comments}
+          targetsTableHeaders={targetsTableHeaders}
+          targetsCellStreaks={targetsCellStreaks}
+          isArchived
+        />
       </Fragment>
     );
   }
@@ -437,7 +328,10 @@ DataSheet.propTypes = {
     id: PropTypes.number.isRequired,
     username: PropTypes.string.isRequired,
   }).isRequired,
-  sheetAccessRights: PropTypes.arrayOf(PropTypes.shape()).isRequired,
+  sheetAccessRights: PropTypes.arrayOf(PropTypes.shape({
+    email: PropTypes.string.isRequired,
+    role: PropTypes.string.isRequired,
+  })).isRequired,
   getSheetAccessRights: PropTypes.func.isRequired,
   createSheetAccessRight: PropTypes.func.isRequired,
   targets: PropTypes.arrayOf(PropTypes.shape({
