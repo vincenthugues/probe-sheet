@@ -24,11 +24,14 @@ const Contributors = ({ sheetAccessRights, createSheetAccessRight, sheetId }) =>
       </div>
       <div>
         <form onSubmit={(e) => {
-          createSheetAccessRight(sheetId, newEmail, newRole);
+          if (!isEmpty(newEmail)) {
+            createSheetAccessRight(sheetId, newEmail, newRole);
+            setNewEmail('');
+          }
           e.preventDefault();
         }}
         >
-          <input placeholder="email" value={newEmail} onChange={({ target: { value } }) => setNewEmail(value)} />
+          <input placeholder="email" value={newEmail} onChange={({ target: { value } }) => setNewEmail(value.trim())} />
           <select value={newRole} onChange={({ target: { value } }) => setNewRole(value)}>
             <option value="viewer">{ROLE_NAME.viewer}</option>
             <option value="contributor">{ROLE_NAME.contributor}</option>
