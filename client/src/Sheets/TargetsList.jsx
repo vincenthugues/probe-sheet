@@ -18,6 +18,7 @@ const TargetsList = ({
   onConfirmAddNewProbe,
   onCancelAddNewProbe,
   onUnarchiveTarget,
+  userRole,
 }) => (
   <Fragment>
     {targets.map((target) => {
@@ -45,6 +46,7 @@ const TargetsList = ({
           comments={targetComments}
           onUnarchive={() => onUnarchiveTarget(target.id)}
           isArchived={isArchived}
+          userRole={userRole}
         />
       );
     })}
@@ -65,6 +67,7 @@ TargetsList.propTypes = {
   onConfirmAddNewProbe: PropTypes.func,
   onCancelAddNewProbe: PropTypes.func,
   onUnarchiveTarget: PropTypes.func,
+  userRole: PropTypes.string.isRequired,
 };
 TargetsList.defaultProps = {
   targetsCellStreaks: {},

@@ -9,7 +9,7 @@ When a target is acquired, a retention probe is done after about a one week brea
 
 
 ## Features
-React client & Node.js/Express backend with signup & login, data collection (sheets, targets, probes, comments)
+React client & Node.js/Express backend with signup & login, data collection (sheets, targets, probes, comments), sheet access & edition rights management
 
 
 ## Main dependencies
@@ -18,13 +18,14 @@ React client & Node.js/Express backend with signup & login, data collection (she
 
 
 ## TODO
-- allow other therapists edition
+- enforce roles in backend
 - ability to add comments/notes to existing probe, and to other therapists' probes as questions?
 - set up db (aws? elephantsql?)
 - allow pdf export/print display
 - share with parents
 - testing
 - logging
+- inject user role by sheet on backend side?
 - reselect
 - sort by last updated/last created
 - publish app online

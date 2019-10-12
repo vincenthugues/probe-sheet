@@ -172,6 +172,7 @@ const TargetBlock = ({
   onCancelAddNewProbe,
   isArchived = false,
   // onUnarchive,
+  userRole,
 }) => (
   <TargetView style={{ color: isArchived ? '#B0B0B0' : '#000000' }}>
     <h3>{name}</h3>
@@ -193,7 +194,7 @@ const TargetBlock = ({
         </tbody>
       </Table>
 
-      {/* {isArchived && (
+      {/* {isArchived && ['owner', 'contributor'].includes(userRole) && (
         <AddProbeButtonView
           onClick={onUnarchive}
           style={{ color: '#000000', width: 'auto' }}
@@ -202,14 +203,14 @@ const TargetBlock = ({
         </AddProbeButtonView>
       )} */}
 
-      {isAddingProbe && (
+      {isAddingProbe && ['owner', 'contributor'].includes(userRole) && (
         <NewProbeBlock probeDraft={probeDraft} onFieldUpdate={onProbeDraftUpdate}>
           <button type="button" disabled={isEmpty(probeDraft.date)} onClick={onConfirmAddNewProbe}>Confirmer</button>
           <button type="button" onClick={onCancelAddNewProbe}>Annuler</button>
         </NewProbeBlock>
       )}
 
-      {!isArchived && !isAddingProbe && (
+      {!isArchived && !isAddingProbe && ['owner', 'contributor'].includes(userRole) && (
         <AddProbeButtonView onClick={onOpenAddNewProbe}>+</AddProbeButtonView>
       )}
     </TableBlock>
@@ -261,6 +262,7 @@ TargetBlock.propTypes = {
   onCancelAddNewProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
   // onUnarchive: PropTypes.func,
+  userRole: PropTypes.string.isRequired,
 };
 TargetBlock.defaultProps = {
   isArchived: false,

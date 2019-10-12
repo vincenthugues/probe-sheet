@@ -266,6 +266,7 @@ class DataSheet extends Component {
             sheetAccessRights={sheetAccessRights}
             createSheetAccessRight={createSheetAccessRight}
             sheetId={sheetId}
+            userRole={userRole}
           />
         </div>
 
@@ -283,32 +284,35 @@ class DataSheet extends Component {
           onConfirmAddNewProbe={this.onConfirmAddNewProbe}
           onCancelAddNewProbe={this.onCancelAddNewProbe}
           onUnarchiveTarget={this.onUnarchiveTarget}
+          userRole={userRole}
         />
         <br />
 
-        {isAddingTarget ? (
-          <NewTargetBlock
-            targetDraft={targetDraft}
-            onFieldUpdate={(fieldName, value) => this.setState({
-              targetDraft: {
-                ...targetDraft,
-                [fieldName]: value,
-              },
-            })}
-          >
-            <div>
-              <button type="button" disabled={isEmpty(targetDraft.name)} onClick={this.onAddNewTarget}>
-                Confirmer
-              </button>
-              <button type="button" onClick={() => this.setState({ isAddingTarget: false })}>
-                Annuler
-              </button>
-            </div>
-          </NewTargetBlock>
-        ) : (
-          <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { name: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
-            Nouvelle cible
-          </AddTargetButtonView>
+        {['owner', 'contributor'].includes(userRole) && (
+          isAddingTarget ? (
+            <NewTargetBlock
+              targetDraft={targetDraft}
+              onFieldUpdate={(fieldName, value) => this.setState({
+                targetDraft: {
+                  ...targetDraft,
+                  [fieldName]: value,
+                },
+              })}
+            >
+              <div>
+                <button type="button" disabled={isEmpty(targetDraft.name)} onClick={this.onAddNewTarget}>
+                  Confirmer
+                </button>
+                <button type="button" onClick={() => this.setState({ isAddingTarget: false })}>
+                  Annuler
+                </button>
+              </div>
+            </NewTargetBlock>
+          ) : (
+            <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { name: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
+              Nouvelle cible
+            </AddTargetButtonView>
+          )
         )}
 
         <SeparatorView />
