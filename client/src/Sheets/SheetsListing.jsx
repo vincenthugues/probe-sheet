@@ -7,13 +7,8 @@ import styled from 'styled-components';
 
 import { getSheetsHandler, createSheetHandler } from '../actions';
 import { getFilteredSheetIds } from './utils';
-
-const FiltersView = styled.div`
-  display: flex;
-  flex: 1 0 auto;
-  justify-content: center;
-  margin: 0.2em;
-`;
+import Filters from './Filters';
+import NewSheetBlock from './NewSheetBlock';
 
 const SheetView = styled.div`
   justify-items: space-between;
@@ -28,12 +23,6 @@ const LinkView = styled(Link)`
   text-decoration: none;
 `;
 
-const NewSheetBlockView = styled.div`
-  display: flex;
-  flex: 0 1 auto;
-  flex-direction: column;
-`;
-
 const SheetsGroupView = styled.div`
   display: flex;
   flex: 1 0 auto;
@@ -41,28 +30,6 @@ const SheetsGroupView = styled.div`
   justify-content: space-around;
   padding: 10px;
 `;
-
-const NewSheetBlock = ({ sheetDraft: { student, skillDomain }, onFieldUpdate, children }) => (
-  <NewSheetBlockView>
-    <label htmlFor="student">
-      Elève
-      <input id="student" value={student} onChange={({ target: { value } }) => onFieldUpdate('student', value)} />
-    </label>
-    <label htmlFor="skillDomain">
-      Domaine
-      <input id="skillDomain" value={skillDomain} onChange={({ target: { value } }) => onFieldUpdate('skillDomain', value)} />
-    </label>
-    {children}
-  </NewSheetBlockView>
-);
-NewSheetBlock.propTypes = {
-  sheetDraft: PropTypes.shape({
-    student: PropTypes.string,
-    skillDomain: PropTypes.string,
-  }).isRequired,
-  onFieldUpdate: PropTypes.func.isRequired,
-  children: PropTypes.node.isRequired,
-};
 
 class SheetsListing extends Component {
   constructor(props) {
@@ -89,16 +56,9 @@ class SheetsListing extends Component {
     }
   }
 
-  componentDidUpdate = async ({ sheets: prevSheets }) => {
-    const { sheets } = this.props;
-
-    if (sheets !== prevSheets) { // TODO: deep comparison
-      this.computeSheetsMetadata();
-    }
-  }
-
   computeSheetsMetadata = async () => {
     const { sheets } = this.props;
+    const { filters } = this.state;
 
     const { students, skillDomains } = sheets.reduce((acc, { student, skillDomain }) => ({
       students: [
@@ -113,17 +73,17 @@ class SheetsListing extends Component {
       students: [],
       skillDomains: [],
     });
-    const filteredSheetIds = getFilteredSheetIds(sheets);
 
     this.setState({
       students,
       skillDomains,
-      filteredSheetIds,
+      filteredSheetIds: getFilteredSheetIds(sheets, filters),
     });
   }
 
   updateFilters = (filter, value) => {
-    const { filters, sheets } = this.state;
+    const { sheets } = this.props;
+    const { filters } = this.state;
     const newFilters = {
       ...filters,
       [filter]: value,
@@ -184,24 +144,13 @@ class SheetsListing extends Component {
 
     return (
       <Fragment>
-        <FiltersView>
-          Filtres:
-          <select value={filters.student} onChange={({ target: { value } }) => this.updateFilters('student', value)}>
-            <option value="">--- Tous les élèves ---</option>
-            {students.map(student => (
-              <option key={student} value={student}>{student}</option>
-            ))}
-          </select>
-          <select value={filters.skillDomain} onChange={({ target: { value } }) => this.updateFilters('skillDomain', value)}>
-            <option value="">--- Tous domaines de compétence ---</option>
-            {skillDomains.map(skillDomain => (
-              <option key={skillDomain} value={skillDomain}>{skillDomain}</option>
-            ))}
-          </select>
-          <button type="button" onClick={this.clearFilters}>
-            Réinitialiser les filtres
-          </button>
-        </FiltersView>
+        <Filters
+          filters={filters}
+          students={students}
+          skillDomains={skillDomains}
+          onUpdate={this.updateFilters}
+          onClear={this.clearFilters}
+        />
 
         <h3>Owned</h3>
         <SheetsGroupView>
