@@ -19,8 +19,9 @@ import {
   DEFAULT_DAILY_PROBES_STREAK,
   PROBE_TYPE,
   TARGETS_AUTO_ARCHIVING,
+  ROLE_NAME,
 } from '../constants';
-import { guessNextProbeType } from './utils';
+import { guessNextProbeType, getUserRole } from './utils';
 import Contributors from './Contributors';
 import TargetsList from './TargetsList';
 import NewTargetBlock from './NewTargetBlock';
@@ -234,7 +235,7 @@ class DataSheet extends Component {
 
   render() {
     const {
-      sheetAccessRights, createSheetAccessRight, targets, probes, comments, sheetId,
+      sheetAccessRights, createSheetAccessRight, targets, probes, comments, sheetId, userRole,
     } = this.props;
     const {
       isAddingTarget,
@@ -256,9 +257,10 @@ class DataSheet extends Component {
       <Fragment>
         {/* <h2>Daily probe data sheet</h2> */}
         <h2>Feuille de cotation quotidienne</h2>
-        <div style={{ fontSize: '1rem' }}>
+        <div>
           <div>Elève : J.D.</div>
           <div>Domaine de compétence : language réceptif</div>
+          <div>{`Role: ${ROLE_NAME[userRole] || 'unknown'}`}</div>
           <br />
           <Contributors
             sheetAccessRights={sheetAccessRights}
@@ -360,24 +362,44 @@ DataSheet.propTypes = {
   getComments: PropTypes.func.isRequired,
   createComment: PropTypes.func.isRequired,
   sheetId: PropTypes.number.isRequired,
+  sheet: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    ownerId: PropTypes.number.isRequired,
+    student: PropTypes.string.isRequired,
+    skillDomain: PropTypes.string.isRequired,
+  }).isRequired,
+  userRole: PropTypes.string.isRequired,
 };
 
 const mapStateToProps = (
   {
     auth: { user },
     probeSheets: {
-      sheetsAccessRights, targets, probes, comments,
+      sheets,
+      sheetsAccessRights,
+      targets,
+      probes,
+      comments,
     },
   },
   { match: { params: { sheetId } } },
-) => ({
-  user,
-  sheetAccessRights: sheetsAccessRights[sheetId] || [],
-  targets: targets.filter(target => target.sheetId === Number(sheetId)),
-  probes,
-  comments,
-  sheetId: Number(sheetId),
-});
+) => {
+  const id = Number(sheetId);
+  const sheet = sheets.find(s => s.id === id);
+  const sheetAccessRights = sheetsAccessRights[id] || [];
+  const userRole = getUserRole(sheet, user, sheetAccessRights);
+
+  return ({
+    user,
+    sheetAccessRights,
+    targets: targets.filter(target => target.sheetId === id),
+    probes,
+    comments,
+    sheetId: id,
+    sheet,
+    userRole,
+  });
+};
 
 const mapDispatchToProps = dispatch => ({
   getSheetAccessRights: getSheetAccessRightsHandler(dispatch),

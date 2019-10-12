@@ -14,6 +14,7 @@ export const PROBE_TABLE_HEADER_BY_TYPE = {
 };
 
 export const ROLE_NAME = {
+  owner: 'créateur',
   contributor: 'contributeur',
   viewer: 'spectateur',
 };
