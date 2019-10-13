@@ -1,22 +1,27 @@
 import express from 'express';
-import { Op } from 'sequelize';
 
 import auth from '../middleware/auth';
-import { getAllowedSheetIds } from './utils';
+import { getVisibleSheetIds, getEditableSheetIds } from './utils';
 
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   try {
-    const { query: { sheetId: querySheetId } } = req;
-    const allowedSheetIds = await getAllowedSheetIds(req);
+    const sheetId = Number(req.query.sheetId);
+    const allowedSheetIds = await getVisibleSheetIds(req);
+    const sheet = await req.context.models.Sheet.findOne({
+      where: { id: sheetId },
+    });
+    if (!sheet) {
+      return res.status(404).send();
+    }
+    if (sheet.ownerId !== req.user.id && !allowedSheetIds.includes(sheetId)) {
+      return res.status(403).send();
+    }
+
     const targets = await req.context.models.Target.findAll({
       where: {
-        [Op.or]: [
-          { ownerId: req.user.id },
-          { sheetId: { [Op.in]: allowedSheetIds } },
-        ],
-        ...querySheetId ? { sheetId: querySheetId } : {},
+        sheetId,
       },
     });
 
@@ -29,12 +34,26 @@ router.get('/', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
+    const sheetId = Number(req.body.sheetId);
+    const { name, baselineProbesNumber, dailyProbesStreak } = req.body;
+
+    const allowedSheetIds = await getEditableSheetIds(req);
+    const sheet = await req.context.models.Sheet.findOne({
+      where: { id: sheetId },
+    });
+    if (!sheet) {
+      return res.status(404).send();
+    }
+    if (sheet.ownerId !== req.user.id && !allowedSheetIds.includes(sheetId)) {
+      return res.status(403).send();
+    }
+
     const target = await req.context.models.Target.create({
-      name: req.body.name,
-      baselineProbesNumber: req.body.baselineProbesNumber,
-      dailyProbesStreak: req.body.dailyProbesStreak,
+      name,
+      baselineProbesNumber,
+      dailyProbesStreak,
       ownerId: req.user.id,
-      sheetId: req.body.sheetId,
+      sheetId,
     });
 
     return res.send(target);

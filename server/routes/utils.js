@@ -1,43 +1,84 @@
 import { Op } from 'sequelize';
 
-export const getAllowedSheetIds = async (req) => {
+export const getVisibleSheetIds = async (req) => {
   const accessRights = await req.context.models.AccessRight.findAll({
     where: {
       email: req.user.email,
     },
   });
-  const rights = accessRights.map(({ dataValues: { sheetId, role } }) => ({ sheetId, role }));
-  const allowedSheetIds = rights.map(({ sheetId }) => sheetId);
+  const visibleSheetIds = accessRights.map(({ dataValues: { sheetId } }) => sheetId);
 
-  return allowedSheetIds;
+  return visibleSheetIds;
 };
 
-export const getAllowedTargetIds = async (req) => {
-  const allowedSheetIds = await getAllowedSheetIds(req);
-  const allowedTargets = await req.context.models.Target.findAll({
+export const getEditableSheetIds = async (req) => {
+  const accessRights = await req.context.models.AccessRight.findAll({
+    where: {
+      email: req.user.email,
+      role: 'contributor',
+    },
+  });
+  const editableSheetIds = accessRights.map(({ dataValues: { sheetId } }) => sheetId);
+
+  return editableSheetIds;
+};
+
+export const getVisibleTargetIds = async (req) => {
+  const visibleSheetIds = await getVisibleSheetIds(req);
+  const visibleTargets = await req.context.models.Target.findAll({
     where: {
       [Op.or]: [
         { ownerId: req.user.id },
-        { sheetId: { [Op.in]: allowedSheetIds } },
+        { sheetId: { [Op.in]: visibleSheetIds } },
       ],
     },
   });
-  const allowedTargetIds = allowedTargets.map(({ dataValues: { id } }) => id);
+  const visibleTargetIds = visibleTargets.map(({ dataValues: { id } }) => id);
 
-  return allowedTargetIds;
+  return visibleTargetIds;
 };
 
-export const getAllowedProbeIds = async (req) => {
-  const allowedTargetIds = await getAllowedTargetIds(req);
-  const allowedProbes = await req.context.models.Probe.findAll({
+export const getEditableTargetIds = async (req) => {
+  const editableSheetIds = await getEditableSheetIds(req);
+  const editableTargets = await req.context.models.Target.findAll({
     where: {
       [Op.or]: [
         { ownerId: req.user.id },
-        { targetId: { [Op.in]: allowedTargetIds } },
+        { sheetId: { [Op.in]: editableSheetIds } },
       ],
     },
   });
-  const allowedProbeIds = allowedProbes.map(({ dataValues: { id } }) => id);
+  const editableTargetIds = editableTargets.map(({ dataValues: { id } }) => id);
 
-  return allowedProbeIds;
+  return editableTargetIds;
+};
+
+export const getVisibleProbeIds = async (req) => {
+  const visibleTargetIds = await getVisibleTargetIds(req);
+  const visibleProbes = await req.context.models.Probe.findAll({
+    where: {
+      [Op.or]: [
+        { ownerId: req.user.id },
+        { targetId: { [Op.in]: visibleTargetIds } },
+      ],
+    },
+  });
+  const visibleProbeIds = visibleProbes.map(({ dataValues: { id } }) => id);
+
+  return visibleProbeIds;
+};
+
+export const getEditableProbeIds = async (req) => {
+  const editableTargetIds = await getEditableTargetIds(req);
+  const editableProbes = await req.context.models.Probe.findAll({
+    where: {
+      [Op.or]: [
+        { ownerId: req.user.id },
+        { targetId: { [Op.in]: editableTargetIds } },
+      ],
+    },
+  });
+  const editableProbeIds = editableProbes.map(({ dataValues: { id } }) => id);
+
+  return editableProbeIds;
 };

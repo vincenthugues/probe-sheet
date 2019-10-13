@@ -228,7 +228,7 @@ export const createTarget = async (draft) => {
 
 export const fetchProbes = async (targetId) => {
   try {
-    const { data: probes } = await axios.get(`${SERVER_URL}/probes${targetId ? `?targetId=${targetId}` : ''}`, getHeadersConfig());
+    const { data: probes } = await axios.get(`${SERVER_URL}/probes?targetId=${targetId}`, getHeadersConfig());
 
     return probes;
   } catch (err) {
@@ -263,9 +263,9 @@ export const createProbe = async (draft) => {
 // COMMENTS
 // ////////////////
 
-export const fetchComments = async () => {
+export const fetchComments = async (probeId) => {
   try {
-    const { data: comments } = await axios.get(`${SERVER_URL}/comments`, getHeadersConfig());
+    const { data: comments } = await axios.get(`${SERVER_URL}/comments?probeId=${probeId}`, getHeadersConfig());
 
     return comments;
   } catch (err) {

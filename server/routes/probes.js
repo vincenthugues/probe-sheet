@@ -1,22 +1,27 @@
 import express from 'express';
-import { Op } from 'sequelize';
 
 import auth from '../middleware/auth';
-import { getAllowedTargetIds } from './utils';
+import { getVisibleTargetIds, getEditableTargetIds } from './utils';
 
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   try {
-    const { query: { targetId: queryTargetId } } = req;
-    const allowedTargetIds = await getAllowedTargetIds(req);
+    const targetId = Number(req.query.targetId);
+    const allowedTargetIds = await getVisibleTargetIds(req);
+    const target = await req.context.models.Target.findOne({
+      where: { id: targetId },
+    });
+    if (!target) {
+      return res.status(404).send();
+    }
+    if (!allowedTargetIds.includes(targetId)) {
+      return res.status(403).send();
+    }
+
     const probes = await req.context.models.Probe.findAll({
       where: {
-        [Op.or]: [
-          { ownerId: req.user.id },
-          { targetId: { [Op.in]: allowedTargetIds } },
-        ],
-        ...queryTargetId ? { targetId: queryTargetId } : {},
+        targetId,
       },
     });
 
@@ -29,39 +34,34 @@ router.get('/', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
+    const targetId = Number(req.body.targetId);
+    const {
+      type, date, response, therapist,
+    } = req.body;
+
+    const allowedTargetIds = await getEditableTargetIds(req);
+    const target = await req.context.models.Target.findOne({
+      where: { id: targetId },
+    });
+    if (!target) {
+      return res.status(404).send();
+    }
+    if (!allowedTargetIds.includes(targetId)) {
+      return res.status(403).send();
+    }
+
     const probe = await req.context.models.Probe.create({
-      type: req.body.type,
-      date: req.body.date,
-      response: req.body.response,
-      therapist: req.body.therapist,
+      type,
+      date,
+      response,
+      therapist,
       ownerId: req.user.id,
-      // TODO: check target belongs to user or user is allowed on target's sheet
-      targetId: req.body.targetId,
+      targetId,
     });
 
     return res.send(probe);
   } catch (err) {
     console.log('Error while creating probe:', err);
-    return res.status(400).send(err);
-  }
-});
-
-router.get('/:probeId', auth, async (req, res) => {
-  try {
-    const allowedTargetIds = await getAllowedTargetIds(req);
-    const probe = await req.context.models.Probe.findOne({
-      where: {
-        id: req.params.probeId,
-        [Op.or]: [
-          { ownerId: req.user.id },
-          { targetId: { [Op.in]: allowedTargetIds } },
-        ],
-      },
-    });
-
-    return res.send(probe);
-  } catch (err) {
-    console.log('Error while getting probe:', err);
     return res.status(400).send(err);
   }
 });

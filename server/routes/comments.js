@@ -1,22 +1,30 @@
 import express from 'express';
-import { Op } from 'sequelize';
 
 import auth from '../middleware/auth';
-import { getAllowedProbeIds } from './utils';
+import { getVisibleProbeIds, getEditableProbeIds } from './utils';
 
 const router = express.Router();
 
 router.get('/', auth, async (req, res) => {
   try {
-    const allowedProbeIds = await getAllowedProbeIds(req);
+    const probeId = Number(req.query.probeId);
+    const allowedProbeIds = await getVisibleProbeIds(req);
+    const probe = await req.context.models.Probe.findOne({
+      where: { id: probeId },
+    });
+    if (!probe) {
+      return res.status(404).send();
+    }
+    if (!allowedProbeIds.includes(probeId)) {
+      return res.status(403).send();
+    }
+
     const comments = await req.context.models.Comment.findAll({
       where: {
-        [Op.or]: [
-          { ownerId: req.user.id },
-          { probeId: { [Op.in]: allowedProbeIds } },
-        ],
+        probeId,
       },
     });
+
     return res.send(comments);
   } catch (err) {
     console.log('Error while getting comments:', err);
@@ -26,11 +34,24 @@ router.get('/', auth, async (req, res) => {
 
 router.post('/', auth, async (req, res) => {
   try {
+    const probeId = Number(req.body.probeId);
+    const { text } = req.body;
+
+    const allowedProbeIds = await getEditableProbeIds(req);
+    const probe = await req.context.models.Probe.findOne({
+      where: { id: probeId },
+    });
+    if (!probe) {
+      return res.status(404).send();
+    }
+    if (!allowedProbeIds.includes(probeId)) {
+      return res.status(403).send();
+    }
+
     const comment = await req.context.models.Comment.create({
-      text: req.body.text,
+      text,
       ownerId: req.user.id,
-      // TODO: check probe belongs to user or user is allowed on probe target's sheet
-      probeId: req.body.probeId,
+      probeId,
     });
 
     return res.send(comment);

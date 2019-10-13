@@ -76,6 +76,14 @@ const targets = [
     dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK,
     sheetId: 1,
   },
+  {
+    ownerId: 1,
+    name: 'Cible 3',
+    creationDate: new Date(),
+    baselineProbesNumber: DEFAULT_BASELINE_PROBES,
+    dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK,
+    sheetId: 3,
+  },
 ];
 
 // PROBE
@@ -149,6 +157,26 @@ const probes = [
     response: false,
     comment: null,
   },
+  {
+    ownerId: 1,
+    therapist: 'Jane Doe',
+    targetId: 3,
+    creationDate: new Date(),
+    type: PROBE_TYPE.BASELINE,
+    date: new Date(),
+    response: false,
+    comment: null,
+  },
+  {
+    ownerId: 1,
+    therapist: 'Jane Doe',
+    targetId: 3,
+    creationDate: new Date(),
+    type: PROBE_TYPE.BASELINE,
+    date: new Date(),
+    response: false,
+    comment: null,
+  },
 ];
 
 // COMMENT
@@ -160,6 +188,11 @@ const comments = [
   {
     text: 'Test comment',
     probeId: 1,
+    ownerId: 1,
+  },
+  {
+    text: 'Comment 2',
+    probeId: 8,
     ownerId: 1,
   },
 ];

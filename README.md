@@ -18,7 +18,6 @@ React client & Node.js/Express backend with signup & login, data collection (she
 
 
 ## TODO
-- enforce roles in backend
 - ability to add comments/notes to existing probe, and to other therapists' probes as questions?
 - set up db (aws? elephantsql?)
 - allow pdf export/print display

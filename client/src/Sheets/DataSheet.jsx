@@ -68,9 +68,14 @@ class DataSheet extends Component {
       await getSheet(sheetId);
     }
     await getSheetAccessRights(sheetId);
-    await getTargets(sheetId);
-    await getProbes();
-    await getComments();
+
+    const { targets } = await getTargets(sheetId);
+    for (const { id: targetId } of targets) {
+      const { probes } = await getProbes(targetId);
+      for (const { id: probeId } of probes) {
+        await getComments(probeId);
+      }
+    }
 
     this.computeTargetsMetadata();
   }

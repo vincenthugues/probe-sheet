@@ -56,6 +56,7 @@ const seedDatabase = async () => {
     await models.Comment.bulkCreate(mockData.comments);
     await models.AccessRight.bulkCreate(mockData.accessRights);
   } catch (err) {
+    /* eslint-disable-next-line no-console */
     console.log('error while seeding database:', err.message);
   }
 };
