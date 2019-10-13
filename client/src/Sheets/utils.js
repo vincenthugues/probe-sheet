@@ -43,5 +43,5 @@ export const guessNextProbeType = (
 export const getUserRole = (sheet, user, sheetAccessRights) => {
   if (sheet && sheet.ownerId === user.id) return 'owner';
   const userAccessRight = sheetAccessRights.find(({ email }) => email === user.email);
-  return userAccessRight ? userAccessRight.role : 'unknown';
+  return userAccessRight ? userAccessRight.role : null;
 };

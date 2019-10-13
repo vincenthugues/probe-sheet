@@ -17,6 +17,7 @@ router.get('/', auth, async (req, res) => {
         ],
       },
     });
+
     return res.send(sheets);
   } catch (err) {
     console.log('Error while getting sheets:', err);
@@ -41,16 +42,18 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/:sheetId', auth, async (req, res) => {
   try {
+    const sheetId = Number(req.params.sheetId);
     const allowedSheetIds = await getAllowedSheetIds(req);
     const sheet = await req.context.models.Sheet.findOne({
-      where: {
-        id: req.params.sheetId,
-        [Op.or]: [
-          { ownerId: req.user.id },
-          { id: { [Op.in]: allowedSheetIds } },
-        ],
-      },
+      where: { id: sheetId },
     });
+    if (!sheet) {
+      return res.status(404).send();
+    }
+    if (sheet.ownerId !== req.user.id && !allowedSheetIds.includes(sheetId)) {
+      return res.status(403).send();
+    }
+
     return res.send(sheet);
   } catch (err) {
     console.log('Error while getting sheet:', err);

@@ -67,7 +67,7 @@ TargetsList.propTypes = {
   onConfirmAddNewProbe: PropTypes.func,
   onCancelAddNewProbe: PropTypes.func,
   onUnarchiveTarget: PropTypes.func,
-  userRole: PropTypes.string.isRequired,
+  userRole: PropTypes.string,
 };
 TargetsList.defaultProps = {
   targetsCellStreaks: {},
@@ -80,6 +80,7 @@ TargetsList.defaultProps = {
   onConfirmAddNewProbe: null,
   onCancelAddNewProbe: null,
   onUnarchiveTarget: null,
+  userRole: null,
 };
 
 export default TargetsList;

@@ -61,7 +61,10 @@ Contributors.propTypes = {
   })).isRequired,
   createSheetAccessRight: PropTypes.func.isRequired,
   sheetId: PropTypes.number.isRequired,
-  userRole: PropTypes.string.isRequired,
+  userRole: PropTypes.string,
+};
+Contributors.defaultProps = {
+  userRole: null,
 };
 
 export default Contributors;

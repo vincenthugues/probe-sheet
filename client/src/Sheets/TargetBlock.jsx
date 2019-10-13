@@ -262,11 +262,12 @@ TargetBlock.propTypes = {
   onCancelAddNewProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
   // onUnarchive: PropTypes.func,
-  userRole: PropTypes.string.isRequired,
+  userRole: PropTypes.string,
 };
 TargetBlock.defaultProps = {
   isArchived: false,
   // onUnarchive: null,
+  userRole: null,
 };
 
 export default TargetBlock;

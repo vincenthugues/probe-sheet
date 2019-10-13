@@ -9,6 +9,7 @@ import {
   SET_USER,
   SET_IS_AUTHENTICATED,
   GET_SHEETS,
+  GET_SHEET,
   CREATE_SHEET,
   GET_SHEET_ACCESS_RIGHTS,
   CREATE_SHEET_ACCESS_RIGHT,
@@ -73,12 +74,28 @@ const mergeArraysById = (currentArray, newArray) => {
   return Object.values(mergedObj);
 };
 
+const getObjFromList = list => list.reduce(
+  (acc, item) => ({
+    ...acc,
+    [item.id]: item,
+  }),
+  {},
+);
+
 const probeSheets = (state = PROBESHEETS_DEFAULT_STATE, action) => {
   switch (action.type) {
     case GET_SHEETS:
       return {
         ...state,
         sheets: action.sheets,
+      };
+    case GET_SHEET:
+      return {
+        ...state,
+        sheets: Object.values({
+          ...getObjFromList(state.sheets),
+          [action.sheetId]: action.sheet,
+        }),
       };
     case CREATE_SHEET:
       return {

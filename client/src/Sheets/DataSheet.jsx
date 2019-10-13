@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { isEmpty, update } from 'ramda';
 
 import {
+  getSheetHandler,
   getSheetAccessRightsHandler,
   createSheetAccessRightHandler,
   getTargetsHandler,
@@ -55,16 +56,16 @@ const AddTargetButtonView = styled.button`
 `;
 
 class DataSheet extends Component {
-  constructor(props) {
-    super(props);
-    this.state = INITIAL_STATE;
-  }
+  state = INITIAL_STATE;
 
   async componentDidMount() {
     const {
-      getSheetAccessRights, getTargets, getProbes, getComments, sheetId,
+      sheetId, sheet, getSheet, getSheetAccessRights, getTargets, getProbes, getComments,
     } = this.props;
 
+    if (!sheet) {
+      await getSheet(sheetId);
+    }
     await getSheetAccessRights(sheetId);
     await getTargets(sheetId);
     await getProbes();
@@ -334,6 +335,14 @@ DataSheet.propTypes = {
     id: PropTypes.number.isRequired,
     username: PropTypes.string.isRequired,
   }).isRequired,
+  sheetId: PropTypes.number.isRequired,
+  sheet: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    ownerId: PropTypes.number.isRequired,
+    student: PropTypes.string.isRequired,
+    skillDomain: PropTypes.string.isRequired,
+  }),
+  getSheet: PropTypes.func.isRequired,
   sheetAccessRights: PropTypes.arrayOf(PropTypes.shape({
     email: PropTypes.string.isRequired,
     role: PropTypes.string.isRequired,
@@ -365,14 +374,11 @@ DataSheet.propTypes = {
   })).isRequired,
   getComments: PropTypes.func.isRequired,
   createComment: PropTypes.func.isRequired,
-  sheetId: PropTypes.number.isRequired,
-  sheet: PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    ownerId: PropTypes.number.isRequired,
-    student: PropTypes.string.isRequired,
-    skillDomain: PropTypes.string.isRequired,
-  }).isRequired,
-  userRole: PropTypes.string.isRequired,
+  userRole: PropTypes.string,
+};
+DataSheet.defaultProps = {
+  sheet: null,
+  userRole: null,
 };
 
 const mapStateToProps = (
@@ -391,21 +397,22 @@ const mapStateToProps = (
   const id = Number(sheetId);
   const sheet = sheets.find(s => s.id === id);
   const sheetAccessRights = sheetsAccessRights[id] || [];
-  const userRole = getUserRole(sheet, user, sheetAccessRights);
+  const userRole = sheet ? getUserRole(sheet, user, sheetAccessRights) : null;
 
   return ({
     user,
+    sheetId: id,
+    sheet,
     sheetAccessRights,
     targets: targets.filter(target => target.sheetId === id),
     probes,
     comments,
-    sheetId: id,
-    sheet,
     userRole,
   });
 };
 
 const mapDispatchToProps = dispatch => ({
+  getSheet: getSheetHandler(dispatch),
   getSheetAccessRights: getSheetAccessRightsHandler(dispatch),
   createSheetAccessRight: createSheetAccessRightHandler(dispatch),
   getTargets: getTargetsHandler(dispatch),

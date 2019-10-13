@@ -1,6 +1,7 @@
 import {
   fetchAuthUser,
   fetchSheets,
+  fetchSheet,
   createSheet,
   fetchSheetAccessRights,
   createSheetAccessRight,
@@ -24,6 +25,7 @@ export const SET_USER = 'SET_USER';
 export const SET_IS_AUTHENTICATED = 'SET_IS_AUTHENTICATED';
 
 export const GET_SHEETS = 'GET_SHEETS';
+export const GET_SHEET = 'GET_SHEET';
 export const CREATE_SHEET = 'CREATE_SHEET';
 export const GET_SHEET_ACCESS_RIGHTS = 'GET_SHEET_ACCESS_RIGHTS';
 export const CREATE_SHEET_ACCESS_RIGHT = 'CREATE_SHEET_ACCESS_RIGHT';
@@ -72,6 +74,16 @@ const getSheetsActionCreator = sheets => ({
 export const getSheetsHandler = dispatch => async () => {
   const sheets = await fetchSheets();
   return dispatch(getSheetsActionCreator(sheets));
+};
+
+const getSheetActionCreator = (sheetId, sheet) => ({
+  type: GET_SHEET,
+  sheetId,
+  sheet,
+});
+export const getSheetHandler = dispatch => async (sheetId) => {
+  const sheet = await fetchSheet(sheetId);
+  return dispatch(getSheetActionCreator(sheetId, sheet));
 };
 
 const createSheetActionCreator = sheet => ({

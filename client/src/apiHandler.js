@@ -108,6 +108,17 @@ export const fetchSheets = async () => {
   }
 };
 
+export const fetchSheet = async (sheetId) => {
+  try {
+    const { data: sheet } = await axios.get(`${SERVER_URL}/sheets/${sheetId}`, getHeadersConfig());
+
+    return sheet;
+  } catch (err) {
+    console.error('error fetching sheet', err);
+    throw err;
+  }
+};
+
 export const createSheet = async (draft) => {
   try {
     const { data: sheet } = await axios.post(
