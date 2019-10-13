@@ -1,3 +1,4 @@
+import { update } from 'ramda';
 import { PROBE_TYPE } from '../constants';
 
 export const getProbeTdBackgroundColor = (response, type, count, dailyProbesStreak) => {
@@ -17,6 +18,66 @@ export const getFilteredSheetIds = (sheets, filters = {}) => sheets
   .filter(({ student }) => !filters.student || student === filters.student)
   .filter(({ skillDomain }) => !filters.skillDomain || skillDomain === filters.skillDomain)
   .map(({ id }) => id);
+
+export const getTargetsTableHeaders = (targets, probes) => targets.reduce((acc1, { id }) => {
+  const targetProbes = probes.filter(({ targetId }) => targetId === id);
+
+  return {
+    ...acc1,
+    [id]: targetProbes.reduce((acc2, { type }) => {
+      const lastItemIndex = acc2.length - 1;
+      const lastItem = lastItemIndex >= 0 ? acc2[lastItemIndex] : null;
+      if (lastItem && lastItem.type === type) {
+        return update(
+          lastItemIndex,
+          {
+            ...acc2[lastItemIndex],
+            span: lastItem.span + 1,
+          },
+          acc2,
+        );
+      }
+      return [...acc2, { type, span: 1 }];
+    }, []),
+  };
+}, {});
+
+// TODO: refactor getTargetsCellStreaks logic
+export const getTargetsCellStreaks = (targets, probes) => {
+  let counters = [];
+
+  return targets.reduce((acc, { id }) => {
+    const targetProbes = probes.filter(({ targetId }) => targetId === id);
+
+    return {
+      ...acc,
+      [id]: targetProbes.map(({ type, response }, i) => {
+        let counter = response ? 1 : 0;
+        if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
+          if (
+            i > 0
+              && targetProbes[i - 1].type === type
+              && targetProbes[i - 1].response === true
+          ) {
+            counter = counters[i - 1];
+          } else {
+            while (
+              targetProbes[i + counter]
+                && targetProbes[i + counter].type === type
+                && targetProbes[i + counter].response === true
+            ) {
+              counter += 1;
+            }
+          }
+        }
+
+        counters = [...counters, counter];
+
+        return counter;
+      }),
+    };
+  }, {});
+};
 
 export const guessNextProbeType = (
   baselineProbesNumber, dailyProbesStreak, targetCellStreaks, probes,

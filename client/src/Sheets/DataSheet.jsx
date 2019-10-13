@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
-import { isEmpty, update } from 'ramda';
+import { isEmpty } from 'ramda';
 
 import {
   getSheetHandler,
@@ -18,11 +18,12 @@ import {
 import {
   DEFAULT_BASELINE_PROBES,
   DEFAULT_DAILY_PROBES_STREAK,
-  PROBE_TYPE,
   TARGETS_AUTO_ARCHIVING,
   ROLE_NAME,
 } from '../constants';
-import { guessNextProbeType, getUserRole } from './utils';
+import {
+  getTargetsTableHeaders, getTargetsCellStreaks, guessNextProbeType, getUserRole,
+} from './utils';
 import Contributors from './Contributors';
 import TargetsList from './TargetsList';
 import NewTargetBlock from './NewTargetBlock';
@@ -149,62 +150,8 @@ class DataSheet extends Component {
   computeTargetsMetadata = () => {
     const { targets, probes } = this.props;
 
-    const targetsTableHeaders = targets.reduce((acc1, { id }) => {
-      const targetProbes = probes.filter(({ targetId }) => targetId === id);
-
-      return {
-        ...acc1,
-        [id]: targetProbes.reduce((acc2, { type }) => {
-          const lastItemIndex = acc2.length - 1;
-          const lastItem = lastItemIndex >= 0 ? acc2[lastItemIndex] : null;
-          if (lastItem && lastItem.type === type) {
-            return update(
-              lastItemIndex,
-              {
-                ...acc2[lastItemIndex],
-                span: lastItem.span + 1,
-              },
-              acc2,
-            );
-          }
-          return [...acc2, { type, span: 1 }];
-        }, []),
-      };
-    }, {});
-
-    // TODO: refactor targetsCellStreaks logic
-    let counters = [];
-    const targetsCellStreaks = targets.reduce((acc, { id }) => {
-      const targetProbes = probes.filter(({ targetId }) => targetId === id);
-
-      return {
-        ...acc,
-        [id]: targetProbes.map(({ type, response }, i) => {
-          let counter = response ? 1 : 0;
-          if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
-            if (
-              i > 0
-              && targetProbes[i - 1].type === type
-              && targetProbes[i - 1].response === true
-            ) {
-              counter = counters[i - 1];
-            } else {
-              while (
-                targetProbes[i + counter]
-                && targetProbes[i + counter].type === type
-                && targetProbes[i + counter].response === true
-              ) {
-                counter += 1;
-              }
-            }
-          }
-
-          counters = [...counters, counter];
-
-          return counter;
-        }),
-      };
-    }, {});
+    const targetsTableHeaders = getTargetsTableHeaders(targets, probes);
+    const targetsCellStreaks = getTargetsCellStreaks(targets, probes);
 
     // toggle isArchived automatically
     if (TARGETS_AUTO_ARCHIVING) {
@@ -236,7 +183,14 @@ class DataSheet extends Component {
 
   render() {
     const {
-      sheetAccessRights, createSheetAccessRight, targets, probes, comments, sheetId, userRole,
+      sheet,
+      sheetAccessRights,
+      createSheetAccessRight,
+      targets,
+      probes,
+      comments,
+      sheetId,
+      userRole,
     } = this.props;
     const {
       isAddingTarget,
@@ -259,9 +213,15 @@ class DataSheet extends Component {
         {/* <h2>Daily probe data sheet</h2> */}
         <h2>Feuille de cotation quotidienne</h2>
         <div>
-          <div>Elève : J.D.</div>
-          <div>Domaine de compétence : language réceptif</div>
-          <div>{`Role: ${ROLE_NAME[userRole] || 'unknown'}`}</div>
+          {sheet && (
+            <Fragment>
+              <div>{`Elève : ${sheet.student}`}</div>
+              <div>{`Domaine de compétence : ${sheet.skillDomain}`}</div>
+            </Fragment>
+          )}
+          {userRole && (
+            <div>{`Role: ${ROLE_NAME[userRole]}`}</div>
+          )}
           <br />
           <Contributors
             sheetAccessRights={sheetAccessRights}
