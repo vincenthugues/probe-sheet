@@ -2,6 +2,7 @@ import {
   getProbeTdBackgroundColor,
   getFilteredSheetIds,
   getUserRole,
+  guessNextProbeType,
 } from './utils';
 import { PROBE_TYPE } from '../constants';
 
@@ -151,4 +152,73 @@ test('gets user role for unallowed user', () => {
   const expectedValue = null;
 
   expect(getUserRole(sheet, user, sheetAccessRights)).toBe(expectedValue);
+});
+
+test('gets next probe type for first probe', () => {
+  const baselineProbesNumber = 3;
+  const dailyProbesStreak = 3;
+  const targetCellsStreaks = [];
+  const probes = [];
+
+  expect(guessNextProbeType(
+    baselineProbesNumber,
+    dailyProbesStreak,
+    targetCellsStreaks,
+    probes,
+  )).toBe(PROBE_TYPE.BASELINE);
+});
+
+test('gets next probe type after enough baseline probes', () => {
+  const baselineProbesNumber = 3;
+  const dailyProbesStreak = 3;
+  const targetCellsStreaks = [0, 0, 0];
+  const probes = [
+    { type: PROBE_TYPE.BASELINE, response: false },
+    { type: PROBE_TYPE.BASELINE, response: false },
+    { type: PROBE_TYPE.BASELINE, response: false },
+  ];
+
+  expect(guessNextProbeType(
+    baselineProbesNumber,
+    dailyProbesStreak,
+    targetCellsStreaks,
+    probes,
+  )).toBe(PROBE_TYPE.DAILY);
+});
+
+test('gets next probe type after too few daily probes', () => {
+  const baselineProbesNumber = 1;
+  const dailyProbesStreak = 2;
+  const targetCellsStreaks = [0, 0, 0];
+  const probes = [
+    { type: PROBE_TYPE.BASELINE, response: false },
+    { type: PROBE_TYPE.DAILY, response: false },
+    { type: PROBE_TYPE.DAILY, response: false },
+  ];
+
+  expect(guessNextProbeType(
+    baselineProbesNumber,
+    dailyProbesStreak,
+    targetCellsStreaks,
+    probes,
+  )).toBe(PROBE_TYPE.DAILY);
+});
+
+test('gets next probe type after enough daily probes', () => {
+  const baselineProbesNumber = 1;
+  const dailyProbesStreak = 2;
+  const targetCellsStreaks = [0, 0, 1, 2];
+  const probes = [
+    { type: PROBE_TYPE.BASELINE, response: false },
+    { type: PROBE_TYPE.DAILY, response: false },
+    { type: PROBE_TYPE.DAILY, response: true },
+    { type: PROBE_TYPE.DAILY, response: true },
+  ];
+
+  expect(guessNextProbeType(
+    baselineProbesNumber,
+    dailyProbesStreak,
+    targetCellsStreaks,
+    probes,
+  )).toBe(PROBE_TYPE.RETENTION);
 });
