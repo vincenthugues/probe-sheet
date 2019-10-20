@@ -19,4 +19,4 @@ export const ROLE_NAME = {
   viewer: 'spectateur',
 };
 
-export const TARGETS_AUTO_ARCHIVING = false;
+export const TARGETS_AUTO_ARCHIVING = true;

@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
-import { isEmpty } from 'ramda';
+import { isEmpty, lensPath, set } from 'ramda';
 
 import {
   getSheetHandler,
@@ -16,6 +16,7 @@ import {
   createCommentHandler,
 } from '../actions';
 import {
+  PROBE_TYPE,
   DEFAULT_BASELINE_PROBES,
   DEFAULT_DAILY_PROBES_STREAK,
   TARGETS_AUTO_ARCHIVING,
@@ -39,6 +40,7 @@ const INITIAL_STATE = {
 
   targetsTableHeaders: {},
   targetCellStreaks: {},
+  archivedTargetsIds: [],
 };
 
 const SeparatorView = styled.div`
@@ -125,18 +127,18 @@ class DataSheet extends Component {
     this.computeTargetsMetadata();
   }
 
-  // onUnarchiveTarget = (targetId) => {
-  //   this.setState(state => ({
-  //     targets: set(
-  //       lensPath([
-  //         state.targets.findIndex(({ id }) => id === targetId),
-  //         'isArchived',
-  //       ]),
-  //       false,
-  //       state.targets,
-  //     ),
-  //   }));
-  // }
+  onUnarchiveTarget = (targetId) => {
+    this.setState(state => ({
+      targets: set(
+        lensPath([
+          state.targets.findIndex(({ id }) => id === targetId),
+          'isArchived',
+        ]),
+        false,
+        state.targets,
+      ),
+    }));
+  }
 
   getNextProbeDraft = (target, probes, targetCellStreaks) => {
     const { user } = this.props;
@@ -160,24 +162,22 @@ class DataSheet extends Component {
 
     // toggle isArchived automatically
     if (TARGETS_AUTO_ARCHIVING) {
-      // const newTargets = targets.map((target) => {
-      //   const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+      const archivedTargetsIds = targets.reduce((acc, target) => {
+        const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
 
-      //   if (targetProbes && targetProbes.length) {
-      //     const lastProbe = targetProbes[targetProbes.length - 1];
+        if (targetProbes && targetProbes.length) {
+          const lastProbe = targetProbes[targetProbes.length - 1];
 
-      //     return {
-      //       ...target,
-      //       isArchived: (
-      //         lastProbe.type === PROBE_TYPE.RETENTION
-      //         && lastProbe.response === true
-      //       ),
-      //     };
-      //   }
-      //   return target;
-      // });
+          if (lastProbe.type === PROBE_TYPE.RETENTION
+              && lastProbe.response === true
+          ) {
+            return [...acc, target.id];
+          }
+        }
+        return acc;
+      }, []);
 
-      // this.setState({ targets: newTargets });
+      this.setState({ archivedTargetsIds });
     }
 
     this.setState({
@@ -203,15 +203,16 @@ class DataSheet extends Component {
       isAddingProbe,
       addingProbeToTargetId,
       probeDraft,
-      targetsTableHeaders,
-      targetsCellStreaks,
+      targetsTableHeaders = {},
+      targetsCellStreaks = {},
+      archivedTargetsIds,
     } = this.state;
-    const activeTargets = targets.filter(
-      ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && !isArchived,
-    );
-    const archivedTargets = targets.filter(
-      ({ id, isArchived }) => targetsTableHeaders[id] && targetsCellStreaks[id] && isArchived,
-    );
+    const activeTargets = targets.filter(({ id }) => (
+      !archivedTargetsIds.includes(id)
+    ));
+    const archivedTargets = targets.filter(({ id }) => (
+      archivedTargetsIds.includes(id)
+    ));
 
     return (
       <Fragment>

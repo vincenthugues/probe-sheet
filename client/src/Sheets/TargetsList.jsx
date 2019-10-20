@@ -31,8 +31,8 @@ const TargetsList = ({
         <TargetBlock
           key={target.id}
           target={target}
-          targetTableHeaders={targetsTableHeaders[target.id]}
-          targetCellStreaks={targetsCellStreaks[target.id]}
+          targetTableHeaders={targetsTableHeaders[target.id] || []}
+          targetCellStreaks={targetsCellStreaks[target.id] || []}
           probes={targetProbes}
           isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
           probeDraft={probeDraft}

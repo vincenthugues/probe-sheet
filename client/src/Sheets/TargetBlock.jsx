@@ -171,7 +171,7 @@ const TargetBlock = ({
   onConfirmAddNewProbe,
   onCancelAddNewProbe,
   isArchived = false,
-  // onUnarchive,
+  onUnarchive,
   userRole,
 }) => (
   <TargetView style={{ color: isArchived ? '#B0B0B0' : '#000000' }}>
@@ -194,14 +194,14 @@ const TargetBlock = ({
         </tbody>
       </Table>
 
-      {/* {isArchived && ['owner', 'contributor'].includes(userRole) && (
+      {isArchived && ['owner', 'contributor'].includes(userRole) && (
         <AddProbeButtonView
           onClick={onUnarchive}
           style={{ color: '#000000', width: 'auto' }}
         >
           Désarchiver
         </AddProbeButtonView>
-      )} */}
+      )}
 
       {isAddingProbe && ['owner', 'contributor'].includes(userRole) && (
         <NewProbeBlock probeDraft={probeDraft} onFieldUpdate={onProbeDraftUpdate}>
@@ -261,12 +261,12 @@ TargetBlock.propTypes = {
   onConfirmAddNewProbe: PropTypes.func.isRequired,
   onCancelAddNewProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
-  // onUnarchive: PropTypes.func,
+  onUnarchive: PropTypes.func,
   userRole: PropTypes.string,
 };
 TargetBlock.defaultProps = {
   isArchived: false,
-  // onUnarchive: null,
+  onUnarchive: null,
   userRole: null,
 };
 
