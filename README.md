@@ -18,36 +18,39 @@ React client & Node.js/Express backend with signup & login, data collection (she
 
 
 ## TODO
-- ability to add comments/notes to existing probe, and to other therapists' probes as questions?
+- new user validation
+- email validation
+- automatically toggle isArchived
+- publish app
 - set up db (aws? elephantsql?)
+- ability to add comments/notes to existing probe, and to other therapists' probes as questions?
 - allow pdf export/print display
-- share with parents
-- testing
+- highlight potential probe's comments while hovering over probe's column
+- allow creating a new "version" of a target, with a link showing the history of previous versions in a read-only state
+- allow soft deletion of targets, probes, comments
+- allow editing targets, probes, comments
+- allow putting a target "on hold"?
+- once a target is created, a record is added to the skills tracking sheet
+- add each skill to skills tracking sheet (beginning, end when done, retention)
+- share with parents (without signing up?)
+- PECS mands
+- better testing
 - logging
 - inject user role by sheet on backend side?
-- reselect
 - sort by last updated/last created
-- publish app online
 - sequential "ids" for each target's comments/notes (local indices)
-- tables horizontal scrolling
-- collapsible baseline columns after first daily probe
+- reselect
+- retention probe reminder after a week
 - weekly cumulative graph for retention, with nb of targets achieved in the week (add week's total and add new point), with condition change lines?
 - suggestion after criterium met (retention after daily streak, daily after failed retention)
-- retention probe reminder after a week
+- tables horizontal scrolling
+- collapsible baseline columns after first daily probe
 - after retention probe failed, suggest higher criterium?
+- reCAPTCHA v2/v3?
 - improve rest api
-- toggle isArchived?
 - auth0? (https://auth0.com/authenticate/react/google/)
 - dark theme
 - internationalization
 - offline mode
 - https
 - node-rate-limiter-flexible
-- targets summary table (beginning, end when done, retention), on a skills tracking sheet?
-- PECS mands
-
-## Notes
-In case of PostgreSQL id conflict when inserting a new entry, do:
-```sql
-SELECT setval('TABLENAME_id_seq', (SELECT MAX(id) FROM "TABLENAME"));
-```
