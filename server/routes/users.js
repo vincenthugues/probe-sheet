@@ -3,10 +3,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import auth from '../middleware/auth';
+import checkIsAdmin from '../middleware/checkIsAdmin';
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkIsAdmin, async (req, res) => {
   const users = await req.context.models.User.findAll();
   return res.send(users);
 });

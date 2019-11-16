@@ -38,11 +38,30 @@ export default class SheetsListing extends Component {
         {users.length > 0 && (
           <Fragment>
             <h2>Users</h2>
-            { users.map(({ id, username }) => (
-              <div key={id}>
-                {`[${id}] ${username}`}
-              </div>
-            ))}
+            <table>
+              <thead>
+                <tr>
+                  <th>id</th>
+                  <th>username</th>
+                  <th>email</th>
+                  <th>role</th>
+                  <th>isValidated</th>
+                </tr>
+              </thead>
+              <tbody>
+                { users.map(({
+                  id, username, email, role, isValidated,
+                }) => (
+                  <tr key={id}>
+                    <td>{id}</td>
+                    <td>{username}</td>
+                    <td>{email}</td>
+                    <td>{role}</td>
+                    <td>{String(isValidated)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Fragment>
         )}
       </MainView>
