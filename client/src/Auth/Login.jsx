@@ -95,7 +95,7 @@ class SignupBlock extends Component {
           <input id="password" type="password" autoComplete="new-password" value={password} onChange={e => this.setState({ password: e.target.value })} />
         </label>
         <br />
-        <button type="button">Inscription</button>
+        <button type="submit">Inscription</button>
         <br />
         <br />
         <button type="button" onClick={onSignupClose}>Annuler</button>
