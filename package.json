@@ -8,8 +8,7 @@
     "client": "cd client && npm start",
     "server": "cd server && npm start",
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
-    "eslint": "eslint .",
-    "precommit": "lint-staged"
+    "eslint": "eslint ."
   },
   "lint-staged": {
     "*.js": [
@@ -39,5 +38,10 @@
     "url": ""
   },
   "license": "UNLICENSED",
-  "description": "probe-sheet"
+  "description": "probe-sheet",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  }
 }
