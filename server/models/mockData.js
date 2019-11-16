@@ -7,16 +7,32 @@ const PROBE_TYPE = {
   RETENTION: 'Retention',
 };
 
+// USER
+// username
+// email
+// password
+// role
+// isValidated
+
 const users = [
+  {
+    username: 'admin',
+    email: 'admin@example.com',
+    password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
+    role: 'admin',
+    isValidated: true,
+  },
   {
     username: 'Jane Doe',
     email: 'jane@example.com',
     password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
+    isValidated: true,
   },
   {
     username: 'John Doe',
     email: 'john@example.com',
     password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
+    isValidated: true,
   },
 ];
 

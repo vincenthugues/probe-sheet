@@ -34,6 +34,8 @@ router.post('/', async (req, res) => {
       {
         id: existingUser.id,
         email,
+        role: existingUser.role,
+        isValidated: existingUser.isValidated,
       },
       process.env.JWT_SECRET,
       {
