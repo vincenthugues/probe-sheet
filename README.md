@@ -9,7 +9,7 @@ When a target is acquired, a retention probe is done after about a one week brea
 
 
 ## Features
-React client & Node.js/Express backend with signup & login, data collection (sheets, targets, probes, comments), sheet access & edition rights management
+React client & Node.js/Express backend with signup, user validation & login, data collection (sheets, targets, probes, comments), sheet access & edition rights management
 
 
 ## Main dependencies
@@ -18,7 +18,6 @@ React client & Node.js/Express backend with signup & login, data collection (she
 
 
 ## TODO
-- new user validation
 - email validation
 - automatically toggle isArchived
 - publish app

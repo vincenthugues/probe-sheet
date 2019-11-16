@@ -83,4 +83,29 @@ router.get('/:userId', auth, async (req, res) => {
   }
 });
 
+router.post('/:userId/validate', auth, checkIsAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ msg: 'Missing required userId' });
+    }
+
+    const user = await req.context.models.User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    if (user.isValidated) {
+      return res.status(400).json({ msg: 'User already validated' });
+    }
+
+    const updatedUser = await user.update({ isValidated: true }, { returning: true });
+
+    return res.send(updatedUser);
+  } catch (err) {
+    console.log('Error while validating user:', err);
+    return res.status(400).send(err);
+  }
+});
+
 module.exports = router;

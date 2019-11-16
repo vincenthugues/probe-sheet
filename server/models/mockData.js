@@ -34,6 +34,11 @@ const users = [
     password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
     isValidated: true,
   },
+  {
+    username: 'Jim',
+    email: 'jim@example.com',
+    password: '$2b$10$HBxA1MI.Ig/QKoGlbsp3rePkjNDUlgWtMHUElMFPJAjtXgvlcZ6UW', // "admin"
+  },
 ];
 
 // SHEET

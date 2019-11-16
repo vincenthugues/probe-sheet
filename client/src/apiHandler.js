@@ -93,6 +93,21 @@ export const createUser = async (username, email, password) => {
   }
 };
 
+export const validateUser = async (userId) => {
+  try {
+    const { data: { user } } = await axios.post(
+      `${SERVER_URL}/users/${userId}/validate`,
+      null,
+      getHeadersConfig(),
+    );
+
+    return user;
+  } catch (err) {
+    console.error('error validating user', err);
+    throw err;
+  }
+};
+
 // ////////////////
 // SHEETS
 // ////////////////
