@@ -2,11 +2,12 @@ import express from 'express';
 import { Op } from 'sequelize';
 
 import auth from '../middleware/auth';
+import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleSheetIds } from './utils';
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const allowedSheetIds = await getVisibleSheetIds(req);
     const sheets = await req.context.models.Sheet.findAll({
@@ -25,7 +26,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const sheet = await req.context.models.Sheet.create({
       student: req.body.student,
@@ -40,7 +41,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.get('/:sheetId', auth, async (req, res) => {
+router.get('/:sheetId', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.params.sheetId);
     const allowedSheetIds = await getVisibleSheetIds(req);
@@ -61,7 +62,7 @@ router.get('/:sheetId', auth, async (req, res) => {
   }
 });
 
-// router.delete('/:sheetId', auth, async (req, res) => {
+// router.delete('/:sheetId', auth, checkIsValidated, async (req, res) => {
 //   try {
 //     await req.context.models.Sheet.destroy({
 //       where: {
@@ -77,7 +78,7 @@ router.get('/:sheetId', auth, async (req, res) => {
 //   }
 // });
 
-router.get('/:sheetId/access-rights', auth, async (req, res) => {
+router.get('/:sheetId/access-rights', auth, checkIsValidated, async (req, res) => {
   try {
     const { sheetId } = req.params;
     const accessRights = await req.context.models.AccessRight.findAll({
@@ -101,7 +102,7 @@ router.get('/:sheetId/access-rights', auth, async (req, res) => {
   }
 });
 
-router.post('/:sheetId/access-rights', auth, async (req, res) => {
+router.post('/:sheetId/access-rights', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.params.sheetId);
     const { email, role } = req.body;

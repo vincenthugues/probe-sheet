@@ -11,23 +11,17 @@ router.post('/', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        msg: 'Missing required field(s)',
-      });
+      return res.status(400).json({ msg: 'Missing required field(s)' });
     }
 
     const existingUser = await req.context.models.User.findOne({ where: { email } });
     if (!existingUser) {
-      return res.status(400).json({
-        msg: 'User not found',
-      });
+      return res.status(400).json({ msg: 'User not found' });
     }
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
     if (!passwordMatch) {
-      return res.status(400).json({
-        msg: 'Invalid credentials',
-      });
+      return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
     jwt.sign(
@@ -50,6 +44,8 @@ router.post('/', async (req, res) => {
             id: existingUser.id,
             username: existingUser.username,
             email: existingUser.email,
+            role: existingUser.role,
+            isValidated: existingUser.isValidated,
           },
         });
       },
@@ -73,7 +69,8 @@ router.get('/user', auth, async (req, res) => {
           'id',
           'username',
           'email',
-          'createdAt',
+          'role',
+          'isValidated',
         ],
       },
     );

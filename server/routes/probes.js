@@ -1,11 +1,12 @@
 import express from 'express';
 
 import auth from '../middleware/auth';
+import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleTargetIds, getEditableTargetIds } from './utils';
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const targetId = Number(req.query.targetId);
     const allowedTargetIds = await getVisibleTargetIds(req);
@@ -32,7 +33,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const targetId = Number(req.body.targetId);
     const {

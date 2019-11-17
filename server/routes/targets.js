@@ -1,11 +1,12 @@
 import express from 'express';
 
 import auth from '../middleware/auth';
+import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleSheetIds, getEditableSheetIds } from './utils';
 
 const router = express.Router();
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.query.sheetId);
     const allowedSheetIds = await getVisibleSheetIds(req);
@@ -32,7 +33,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.body.sheetId);
     const { name, baselineProbesNumber, dailyProbesStreak } = req.body;
@@ -63,7 +64,7 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.delete('/:targetId', auth, async (req, res) => {
+router.delete('/:targetId', auth, checkIsValidated, async (req, res) => {
   try {
     await req.context.models.Target.destroy({
       where: {

@@ -59,6 +59,8 @@ router.post('/', async (req, res) => {
                 id: newUser.id,
                 username: newUser.username,
                 email: newUser.email,
+                role: newUser.role,
+                isValidated: newUser.isValidated,
               },
             });
           },
