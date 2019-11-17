@@ -18,26 +18,26 @@ React client & Node.js/Express backend with signup, user validation & login, dat
 
 
 ## TODO
-- email validation
-- automatically toggle isArchived
 - publish app
 - set up db (aws? elephantsql?)
 - ability to add comments/notes to existing probe, and to other therapists' probes as questions?
 - allow pdf export/print display
+- automatically toggle isArchived
 - highlight potential probe's comments while hovering over probe's column
+- sequential "ids" for each target's comments/notes (local indices)
 - allow creating a new "version" of a target, with a link showing the history of previous versions in a read-only state
 - allow soft deletion of targets, probes, comments
 - allow editing targets, probes, comments
+- email validation
 - allow putting a target "on hold"?
-- once a target is created, a record is added to the skills tracking sheet
-- add each skill to skills tracking sheet (beginning, end when done, retention)
+- add each skill/target to skills tracking sheet (beginning, end when done, retention)
+- allow hiding skill/target from skills tracking sheet?
 - share with parents (without signing up?)
 - PECS mands
 - better testing
 - logging
 - inject user role by sheet on backend side?
-- sort by last updated/last created
-- sequential "ids" for each target's comments/notes (local indices)
+- allow sorting by last updated/last created
 - reselect
 - retention probe reminder after a week
 - weekly cumulative graph for retention, with nb of targets achieved in the week (add week's total and add new point), with condition change lines?
