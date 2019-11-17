@@ -24,7 +24,6 @@ React client & Node.js/Express backend with signup, user validation & login, dat
 - allow pdf export/print display
 - automatically toggle isArchived
 - highlight potential probe's comments while hovering over probe's column
-- sequential "ids" for each target's comments/notes (local indices)
 - allow creating a new "version" of a target, with a link showing the history of previous versions in a read-only state
 - allow soft deletion of targets, probes, comments
 - allow editing targets, probes, comments

@@ -12,16 +12,15 @@ const Td = styled.td`
 `;
 
 const ProbeCell = ({
-  type, response, count, commentId, comments, dailyProbesStreak,
+  type, response, count, commentIndex, commentText, dailyProbesStreak,
 }) => {
-  const commentText = commentId && comments.find(({ id }) => id === commentId).text;
   const backgroundColor = getProbeTdBackgroundColor(response, type, count, dailyProbesStreak);
 
   return (
     <Td style={{ backgroundColor }}>
       {response ? 'Oui' : 'Non'}
       {commentText && (
-        <sup title={commentText}>{`[${commentId}]`}</sup>
+        <sup title={commentText}>{`[${commentIndex + 1}]`}</sup>
       )}
     </Td>
   );
@@ -30,15 +29,13 @@ ProbeCell.propTypes = {
   type: PropTypes.string.isRequired,
   response: PropTypes.bool.isRequired,
   count: PropTypes.number.isRequired,
-  commentId: PropTypes.number,
-  comments: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    text: PropTypes.string.isRequired,
-  })).isRequired,
+  commentIndex: PropTypes.number,
+  commentText: PropTypes.string,
   dailyProbesStreak: PropTypes.number.isRequired,
 };
 ProbeCell.defaultProps = {
-  commentId: null,
+  commentIndex: null,
+  commentText: null,
 };
 
 export default ProbeCell;

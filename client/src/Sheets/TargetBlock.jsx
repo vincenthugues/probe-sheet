@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
-import { isEmpty, prop } from 'ramda';
+import { isEmpty } from 'ramda';
 
 import { PROBE_TYPE, PROBE_TABLE_HEADER_BY_TYPE } from '../constants';
 import ProbeCell from './ProbeCell';
@@ -125,17 +125,21 @@ const ResponseRow = ({
 }) => (
   <tr>
     <Th>Réponse</Th>
-    {probes.map(({ id, type, response }, idx) => (
-      <ProbeCell
-        key={id}
-        type={type}
-        response={response}
-        count={targetCellStreaks[idx] || 0}
-        commentId={prop('id', comments.find(({ probeId }) => probeId === id))}
-        comments={comments}
-        dailyProbesStreak={dailyProbesStreak}
-      />
-    ))}
+    {probes.map(({ id, type, response }, idx) => {
+      const comment = comments.find(({ probeId }) => probeId === id);
+
+      return (
+        <ProbeCell
+          key={id}
+          type={type}
+          response={response}
+          count={targetCellStreaks[idx] || 0}
+          commentIndex={comment && comments.indexOf(comment)}
+          commentText={comment && comment.text}
+          dailyProbesStreak={dailyProbesStreak}
+        />
+      );
+    })}
   </tr>
 );
 ResponseRow.propTypes = {
@@ -215,9 +219,9 @@ const TargetBlock = ({
       )}
     </TableBlock>
     <CommentsView>
-      {comments.map(({ id, text }) => (
+      {comments.map(({ id, text }, index) => (
         <div key={id}>
-          {`[${id}] ${text}`}
+          {`[${index + 1}] ${text}`}
         </div>
       ))}
     </CommentsView>
