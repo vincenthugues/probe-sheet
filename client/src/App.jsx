@@ -53,12 +53,12 @@ NavBar.propTypes = {
 };
 
 class MainRouter extends Component {
-  componentDidMount() {
+  async componentDidMount() {
     const { onAuth, getAuthUser } = this.props;
 
     if (localStorage.getItem('token')) {
-      getAuthUser();
-      onAuth();
+      await getAuthUser();
+      await onAuth();
     }
   }
 
@@ -89,7 +89,6 @@ MainRouter.propTypes = {
 
 const mapStateToProps = ({ auth: { isAuthenticated, user } }) => ({
   isAuthenticated,
-  isValidated: !!(user && user.isValidated),
   isAdmin: !!(user && user.role === 'admin'),
 });
 

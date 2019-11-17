@@ -48,9 +48,9 @@ class SheetsListing extends Component {
   }
 
   componentDidMount = async () => {
-    const { isAuthenticated, getSheets } = this.props;
+    const { isAuthenticated, isValidated, getSheets } = this.props;
 
-    if (isAuthenticated) {
+    if (isAuthenticated && isValidated) {
       await getSheets();
       this.computeSheetsMetadata();
     }
