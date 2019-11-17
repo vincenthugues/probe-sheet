@@ -34,7 +34,25 @@ const NavLinkView = styled(Link)`
   text-decoration: none;
 `;
 
-class NavBar extends Component {
+const NavBar = ({ isAuthenticated, isAdmin }) => (
+  <NavView>
+    {isAuthenticated ? (
+      <Fragment>
+        <NavLinkView to="/">Index</NavLinkView>
+        {isAdmin ? <NavLinkView to="/admin">Admin</NavLinkView> : null}
+        <NavLinkView to="/logout">Déconnexion</NavLinkView>
+      </Fragment>
+    ) : (
+      <NavLinkView to="/login">Connexion</NavLinkView>
+    )}
+  </NavView>
+);
+NavBar.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
+};
+
+class MainRouter extends Component {
   componentDidMount() {
     const { onAuth, getAuthUser } = this.props;
 
@@ -45,31 +63,34 @@ class NavBar extends Component {
   }
 
   render() {
-    const { isAuthenticated } = this.props;
+    const { isAuthenticated, isAdmin } = this.props;
 
     return (
-      <NavView>
-        {isAuthenticated ? (
-          <Fragment>
-            <NavLinkView to="/">Index</NavLinkView>
-            <NavLinkView to="/admin">Admin</NavLinkView>
-            <NavLinkView to="/logout">Déconnexion</NavLinkView>
-          </Fragment>
-        ) : (
-          <NavLinkView to="/login">Connexion</NavLinkView>
-        )}
-      </NavView>
+      <Router>
+        <MainView>
+          <NavBar isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
+          <Route path="/" exact component={SheetsListing} />
+          <Route path="/login" exact component={Login} />
+          <Route path="/logout" exact component={Logout} />
+          <Route path="/pending-validation" exact component={() => <div>Account pending validation</div>} />
+          <Route path="/admin" exact component={Admin} />
+          <Route path="/datasheet/:sheetId" component={DataSheet} />
+        </MainView>
+      </Router>
     );
   }
 }
-NavBar.propTypes = {
+MainRouter.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
   onAuth: PropTypes.func.isRequired,
   getAuthUser: PropTypes.func.isRequired,
 };
 
-const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
+const mapStateToProps = ({ auth: { isAuthenticated, user } }) => ({
   isAuthenticated,
+  isValidated: !!(user && user.isValidated),
+  isAdmin: !!(user && user.role === 'admin'),
 });
 
 const mapDispatchToProps = dispatch => ({
@@ -77,21 +98,12 @@ const mapDispatchToProps = dispatch => ({
   getAuthUser: getAuthUserHandler(dispatch),
 });
 
-const AuthNavBar = connect(mapStateToProps, mapDispatchToProps)(NavBar);
+const ConnectedMainRouter = connect(mapStateToProps, mapDispatchToProps)(MainRouter);
 
 const App = () => (
   <div className="App">
     <Provider store={store}>
-      <Router>
-        <MainView>
-          <AuthNavBar />
-          <Route path="/" exact component={SheetsListing} />
-          <Route path="/login" exact component={Login} />
-          <Route path="/logout" exact component={Logout} />
-          <Route path="/admin" exact component={Admin} />
-          <Route path="/datasheet/:sheetId" component={DataSheet} />
-        </MainView>
-      </Router>
+      <ConnectedMainRouter />
     </Provider>
   </div>
 );

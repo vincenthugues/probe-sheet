@@ -122,7 +122,9 @@ class SheetsListing extends Component {
   }
 
   render() {
-    const { isAuthenticated, userId, sheets } = this.props;
+    const {
+      isAuthenticated, isValidated, userId, sheets,
+    } = this.props;
     const {
       students,
       skillDomains,
@@ -133,6 +135,7 @@ class SheetsListing extends Component {
     } = this.state;
 
     if (!isAuthenticated) return <Redirect to="/login" />;
+    if (!isValidated) return <Redirect to="/pending-validation" />;
 
     const ownedSheetIds = filteredSheetIds.filter((id) => {
       const matchedSheet = sheets.find(sheet => sheet.id === id);
@@ -211,6 +214,7 @@ class SheetsListing extends Component {
 }
 SheetsListing.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
+  isValidated: PropTypes.bool.isRequired,
   userId: PropTypes.number,
   sheets: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   getSheets: PropTypes.func.isRequired,
@@ -225,6 +229,7 @@ const mapStateToProps = ({
   probeSheets: { sheets },
 }) => ({
   isAuthenticated,
+  isValidated: !!(user && user.isValidated),
   userId: user ? user.id : null,
   sheets,
 });
