@@ -50,21 +50,21 @@ const users = [
 
 const sheets = [
   {
-    ownerId: 1,
+    ownerId: 2,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
     student: 'J.D.',
     skillDomain: 'Language réceptif',
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
     student: 'A.B.',
     skillDomain: 'Language réceptif',
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     creationDate: new Date(),
     lastUpdateDate: new Date(),
     student: 'J.D.',
@@ -82,7 +82,7 @@ const sheets = [
 
 const targets = [
   {
-    ownerId: 1,
+    ownerId: 2,
     name: 'Cible 1',
     creationDate: new Date(),
     baselineProbesNumber: DEFAULT_BASELINE_PROBES,
@@ -90,7 +90,7 @@ const targets = [
     sheetId: 1,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     name: 'Cible 2',
     creationDate: new Date(),
     baselineProbesNumber: DEFAULT_BASELINE_PROBES,
@@ -98,7 +98,7 @@ const targets = [
     sheetId: 1,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     name: 'Cible 3',
     creationDate: new Date(),
     baselineProbesNumber: DEFAULT_BASELINE_PROBES,
@@ -119,7 +119,7 @@ const targets = [
 
 const probes = [
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
@@ -129,7 +129,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
@@ -139,7 +139,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
@@ -149,7 +149,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
@@ -159,7 +159,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 1,
     creationDate: new Date(),
@@ -169,7 +169,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'John Doe',
     targetId: 2,
     creationDate: new Date(),
@@ -179,7 +179,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'Jane Doe',
     targetId: 3,
     creationDate: new Date(),
@@ -189,7 +189,7 @@ const probes = [
     comment: null,
   },
   {
-    ownerId: 1,
+    ownerId: 2,
     therapist: 'Jane Doe',
     targetId: 3,
     creationDate: new Date(),
@@ -209,12 +209,12 @@ const comments = [
   {
     text: 'Test comment',
     probeId: 1,
-    ownerId: 1,
+    ownerId: 2,
   },
   {
     text: 'Comment 2',
     probeId: 8,
-    ownerId: 1,
+    ownerId: 2,
   },
 ];
 
