@@ -7,7 +7,8 @@
   "scripts": {
     "client": "cd client && npm start",
     "server": "cd server && npm start",
-    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
+    "start": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
+    "dev": "concurrently --kill-others-on-fail \"cd server && npm run dev\" \"cd client && npm start\"",
     "eslint": "eslint ."
   },
   "lint-staged": {
