@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { pick } from 'ramda';
 
-const SERVER_URL = 'http://localhost:5000';
+const SERVER_URL = '/api';
 
 export const getHeadersConfig = () => {
   const token = localStorage.getItem('token');

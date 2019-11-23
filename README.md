@@ -8,6 +8,19 @@ A target can be acquired after for example a "Yes" response in 3 consecutive ses
 When a target is acquired, a retention probe is done after about a one week break
 
 
+## Build & deployment
+- get project files on host (using git or rsync for example)
+- set up the client  
+`(cd client && npm i && npm run build)`
+- configure the db user and password  
+`nano server/.env`
+- set up the server  
+`cd server`  
+`npm i && npm run build`
+- run the app
+`node ./build/app.js`
+
+
 ## Features
 React client & Node.js/Express backend with signup, user validation & login, data collection (sheets, targets, probes, comments), sheet access & edition rights management
 

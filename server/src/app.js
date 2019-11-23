@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-app.use(express.static(path.join(__dirname, '/client/build')));
+app.use(express.static(path.join(__dirname, '../../client/build')));
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
@@ -33,14 +33,14 @@ app.use(async (req, res, next) => {
   next();
 });
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '/client/build/index.html')));
+app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/sheets', sheetsRouter);
+app.use('/api/targets', targetsRouter);
+app.use('/api/probes', probesRouter);
+app.use('/api/comments', commentsRouter);
 
-app.use('/auth', authRouter);
-app.use('/users', usersRouter);
-app.use('/sheets', sheetsRouter);
-app.use('/targets', targetsRouter);
-app.use('/probes', probesRouter);
-app.use('/comments', commentsRouter);
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../../client/build/index.html')));
 
 // error handling middleware should be loaded after loading the routes
 if (app.get('env') === 'development') {
