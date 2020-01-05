@@ -4,23 +4,35 @@ import auth from '../middleware/auth';
 import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleTargetIds, getEditableTargetIds } from './utils';
 
+const PROBE_FIELDS = ['id', 'type', 'date', 'response', 'therapist', 'ownerId', 'targetId'];
+
 const router = express.Router();
 
 router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const targetId = Number(req.query.targetId);
-    const allowedTargetIds = await getVisibleTargetIds(req);
-    const target = await req.context.models.Target.findOne({
+    const userId = Number(req.user.id);
+    const { models: { Probe, Sheet, Target } } = req.context;
+
+    const target = await Target.findOne({
+      attributes: ['id'],
       where: { id: targetId },
+      include: {
+        model: Sheet,
+        attributes: ['ownerId'],
+      },
     });
     if (!target) {
       return res.status(404).send();
     }
-    if (!allowedTargetIds.includes(targetId)) {
+
+    const allowedTargetIds = await getVisibleTargetIds(req);
+    if (target.sheet.ownerId !== userId && !allowedTargetIds.includes(targetId)) {
       return res.status(403).send();
     }
 
-    const probes = await req.context.models.Probe.findAll({
+    const probes = await Probe.findAll({
+      attributes: PROBE_FIELDS,
       where: {
         targetId,
       },
@@ -36,22 +48,30 @@ router.get('/', auth, checkIsValidated, async (req, res) => {
 router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const targetId = Number(req.body.targetId);
+    const userId = Number(req.user.id);
     const {
       type, date, response, therapist,
     } = req.body;
+    const { models: { Probe, Sheet, Target } } = req.context;
 
-    const allowedTargetIds = await getEditableTargetIds(req);
-    const target = await req.context.models.Target.findOne({
+    const target = await Target.findOne({
+      attributes: ['id'],
       where: { id: targetId },
+      include: {
+        model: Sheet,
+        attributes: ['ownerId'],
+      },
     });
     if (!target) {
       return res.status(404).send();
     }
-    if (!allowedTargetIds.includes(targetId)) {
+
+    const allowedTargetIds = await getEditableTargetIds(req);
+    if (target.sheet.ownerId !== userId && !allowedTargetIds.includes(targetId)) {
       return res.status(403).send();
     }
 
-    const probe = await req.context.models.Probe.create({
+    const probe = await Probe.create({
       type,
       date,
       response,

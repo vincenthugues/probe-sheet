@@ -1,6 +1,6 @@
 {
   "name": "probe-sheet-server",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "nodemon --exec babel-node src/app.js",
@@ -30,6 +30,7 @@
     "@babel/polyfill": "^7.7.0",
     "@babel/preset-env": "^7.7.7",
     "babel-preset-env": "^1.7.0",
-    "nodemon": "^1.19.4"
+    "nodemon": "^1.19.4",
+    "sequelize-cli": "^5.5.1"
   }
 }

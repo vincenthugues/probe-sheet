@@ -7,6 +7,19 @@ const accessRight = (sequelize, DataTypes) => {
     email: {
       type: DataTypes.STRING,
       allowNull: false,
+      primaryKey: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
@@ -19,7 +32,9 @@ const accessRight = (sequelize, DataTypes) => {
   });
 
   AccessRight.associate = (models) => {
-    AccessRight.belongsTo(models.Sheet);
+    AccessRight.belongsTo(models.Sheet, {
+      foreignKey: { primaryKey: true },
+    });
   };
 
   return AccessRight;

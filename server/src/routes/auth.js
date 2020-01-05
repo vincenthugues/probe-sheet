@@ -9,12 +9,13 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const { models: { User } } = req.context;
 
     if (!email || !password) {
       return res.status(400).json({ msg: 'Missing required field(s)' });
     }
 
-    const existingUser = await req.context.models.User.findOne({ where: { email } });
+    const existingUser = await User.findOne({ where: { email } });
     if (!existingUser) {
       return res.status(400).json({ msg: 'User not found' });
     }

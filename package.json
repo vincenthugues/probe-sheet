@@ -9,7 +9,12 @@
     "server": "cd server && npm start",
     "start": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
     "dev": "concurrently --kill-others-on-fail \"cd server && npm run dev\" \"cd client && npm start\"",
-    "eslint": "eslint ."
+    "eslint": "eslint .",
+    "db:migrate": "cd server/src && npx sequelize-cli db:migrate",
+    "db:migrate:undo": "cd server/src && npx sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "cd server/src && npx sequelize-cli db:migrate:undo:all",
+    "db:seed": "cd server/src && npx sequelize-cli db:seed:all",
+    "db:reset-migrate-seed": "npm run db:migrate:undo:all && npm run db:migrate && npm run db:seed"
   },
   "lint-staged": {
     "*.js": [

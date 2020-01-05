@@ -4,23 +4,30 @@ import auth from '../middleware/auth';
 import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleProbeIds, getEditableProbeIds } from './utils';
 
+const COMMENT_FIELDS = ['id', 'text', 'authorId', 'probeId'];
+
 const router = express.Router();
 
 router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const probeId = Number(req.query.probeId);
-    const allowedProbeIds = await getVisibleProbeIds(req);
-    const probe = await req.context.models.Probe.findOne({
+    const { models: { Comment, Probe } } = req.context;
+
+    const probe = await Probe.findOne({
+      attributes: ['id'],
       where: { id: probeId },
     });
     if (!probe) {
       return res.status(404).send();
     }
+
+    const allowedProbeIds = await getVisibleProbeIds(req);
     if (!allowedProbeIds.includes(probeId)) {
       return res.status(403).send();
     }
 
-    const comments = await req.context.models.Comment.findAll({
+    const comments = await Comment.findAll({
+      attributes: COMMENT_FIELDS,
       where: {
         probeId,
       },
@@ -37,9 +44,11 @@ router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const probeId = Number(req.body.probeId);
     const { text } = req.body;
+    const { models: { Comment, Probe } } = req.context;
 
     const allowedProbeIds = await getEditableProbeIds(req);
-    const probe = await req.context.models.Probe.findOne({
+    const probe = await Probe.findOne({
+      attributes: ['id'],
       where: { id: probeId },
     });
     if (!probe) {
@@ -49,7 +58,7 @@ router.post('/', auth, checkIsValidated, async (req, res) => {
       return res.status(403).send();
     }
 
-    const comment = await req.context.models.Comment.create({
+    const comment = await Comment.create({
       text,
       ownerId: req.user.id,
       probeId,

@@ -1,9 +1,33 @@
 const probe = (sequelize, DataTypes) => {
   const Probe = sequelize.define('probe', {
-    type: DataTypes.STRING,
-    date: DataTypes.DATE,
-    response: DataTypes.BOOLEAN,
-    therapist: DataTypes.STRING,
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    response: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+    therapist: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 
   Probe.associate = (models) => {

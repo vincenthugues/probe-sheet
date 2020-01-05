@@ -4,23 +4,30 @@ import auth from '../middleware/auth';
 import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleSheetIds, getEditableSheetIds } from './utils';
 
+const TARGET_FIELDS = ['id', 'name', 'baselineProbesNumber', 'dailyProbesStreak', 'ownerId', 'sheetId', 'createdAt'];
+
 const router = express.Router();
 
 router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.query.sheetId);
+    const userId = Number(req.user.id);
+    const { models: { Sheet, Target } } = req.context;
+
     const allowedSheetIds = await getVisibleSheetIds(req);
-    const sheet = await req.context.models.Sheet.findOne({
+    const sheet = await Sheet.findOne({
+      attributes: ['id', 'ownerId'],
       where: { id: sheetId },
     });
     if (!sheet) {
       return res.status(404).send();
     }
-    if (sheet.ownerId !== req.user.id && !allowedSheetIds.includes(sheetId)) {
+    if (sheet.ownerId !== userId && !allowedSheetIds.includes(sheetId)) {
       return res.status(403).send();
     }
 
-    const targets = await req.context.models.Target.findAll({
+    const targets = await Target.findAll({
+      attributes: TARGET_FIELDS,
       where: {
         sheetId,
       },
@@ -37,23 +44,26 @@ router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.body.sheetId);
     const { name, baselineProbesNumber, dailyProbesStreak } = req.body;
+    const userId = Number(req.user.id);
+    const { models: { Sheet, Target } } = req.context;
 
     const allowedSheetIds = await getEditableSheetIds(req);
-    const sheet = await req.context.models.Sheet.findOne({
+    const sheet = await Sheet.findOne({
+      attributes: ['id', 'ownerId'],
       where: { id: sheetId },
     });
     if (!sheet) {
       return res.status(404).send();
     }
-    if (sheet.ownerId !== req.user.id && !allowedSheetIds.includes(sheetId)) {
+    if (sheet.ownerId !== userId && !allowedSheetIds.includes(sheetId)) {
       return res.status(403).send();
     }
 
-    const target = await req.context.models.Target.create({
+    const target = await Target.create({
       name,
       baselineProbesNumber,
       dailyProbesStreak,
-      ownerId: req.user.id,
+      ownerId: userId,
       sheetId,
     });
 
@@ -64,20 +74,22 @@ router.post('/', auth, checkIsValidated, async (req, res) => {
   }
 });
 
-router.delete('/:targetId', auth, checkIsValidated, async (req, res) => {
-  try {
-    await req.context.models.Target.destroy({
-      where: {
-        id: req.params.targetId,
-        ownerId: req.user.id,
-      },
-    });
+// router.delete('/:targetId', auth, checkIsValidated, async (req, res) => {
+//   try {
+//     const { models: { Target } } = req.context;
 
-    return res.send(true);
-  } catch (err) {
-    console.log('Error while deleting target:', err);
-    return res.status(400).send(err);
-  }
-});
+//     await Target.destroy({
+//       where: {
+//         id: req.params.targetId,
+//         ownerId: req.user.id,
+//       },
+//     });
+
+//     return res.send(true);
+//   } catch (err) {
+//     console.log('Error while deleting target:', err);
+//     return res.status(400).send(err);
+//   }
+// });
 
 module.exports = router;

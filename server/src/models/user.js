@@ -24,10 +24,22 @@ const user = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 
   User.associate = (models) => {
-    User.hasMany(models.Sheet);
+    User.hasMany(models.Sheet, { foreignKey: 'ownerId' });
   };
 
   User.findByLogin = async (login) => {

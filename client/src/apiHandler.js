@@ -221,11 +221,11 @@ export const createTarget = async (draft) => {
       `${SERVER_URL}/targets`,
       pick([
         'name',
-        'creationDate',
         'baselineProbesNumber',
         'dailyProbesStreak',
         'ownerId',
         'sheetId',
+        'createdAt',
       ], draft),
       getHeadersConfig(),
     );

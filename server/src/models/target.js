@@ -1,8 +1,29 @@
 const target = (sequelize, DataTypes) => {
   const Target = sequelize.define('target', {
-    name: DataTypes.STRING,
-    baselineProbesNumber: DataTypes.INTEGER,
-    dailyProbesStreak: DataTypes.INTEGER,
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    baselineProbesNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    dailyProbesStreak: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   });
 
   Target.associate = (models) => {

@@ -5,12 +5,17 @@ import auth from '../middleware/auth';
 import checkIsValidated from '../middleware/checkIsValidated';
 import { getVisibleSheetIds } from './utils';
 
+const SHEET_FIELDS = ['id', 'student', 'skillDomain', 'ownerId', 'createdAt', 'updatedAt'];
+
 const router = express.Router();
 
 router.get('/', auth, checkIsValidated, async (req, res) => {
   try {
+    const { models: { Sheet } } = req.context;
+
     const allowedSheetIds = await getVisibleSheetIds(req);
-    const sheets = await req.context.models.Sheet.findAll({
+    const sheets = await Sheet.findAll({
+      attributes: SHEET_FIELDS,
       where: {
         [Op.or]: [
           { ownerId: req.user.id },
@@ -28,9 +33,12 @@ router.get('/', auth, checkIsValidated, async (req, res) => {
 
 router.post('/', auth, checkIsValidated, async (req, res) => {
   try {
-    const sheet = await req.context.models.Sheet.create({
-      student: req.body.student,
-      skillDomain: req.body.skillDomain,
+    const { student, skillDomain } = req.body;
+    const { models: { Sheet } } = req.context;
+
+    const sheet = await Sheet.create({
+      student,
+      skillDomain,
       ownerId: req.user.id,
     });
 
@@ -44,9 +52,14 @@ router.post('/', auth, checkIsValidated, async (req, res) => {
 router.get('/:sheetId', auth, checkIsValidated, async (req, res) => {
   try {
     const sheetId = Number(req.params.sheetId);
+    const { models: { Sheet } } = req.context;
+
     const allowedSheetIds = await getVisibleSheetIds(req);
-    const sheet = await req.context.models.Sheet.findOne({
-      where: { id: sheetId },
+    const sheet = await Sheet.findOne({
+      attributes: SHEET_FIELDS,
+      where: {
+        id: sheetId,
+      },
     });
     if (!sheet) {
       return res.status(404).send();
@@ -64,13 +77,16 @@ router.get('/:sheetId', auth, checkIsValidated, async (req, res) => {
 
 // router.delete('/:sheetId', auth, checkIsValidated, async (req, res) => {
 //   try {
-//     await req.context.models.Sheet.destroy({
+//     const { models: { Sheet } } = req.context;
+//
+//     await Sheet.destroy({
 //       where: {
 //         id: req.params.sheetId,
 //         ownerId: req.user.id,
+//         deletedAt: null,
 //       },
 //     });
-
+//
 //     return res.send(true);
 //   } catch (err) {
 //     console.log('Error while deletting sheet:', err);
@@ -81,13 +97,15 @@ router.get('/:sheetId', auth, checkIsValidated, async (req, res) => {
 router.get('/:sheetId/access-rights', auth, checkIsValidated, async (req, res) => {
   try {
     const { sheetId } = req.params;
-    const accessRights = await req.context.models.AccessRight.findAll({
+    const { models: { AccessRight } } = req.context;
+
+    const accessRights = await AccessRight.findAll({
+      attributes: ['email', 'role'],
       where: {
         sheetId,
       },
-      attributes: ['email', 'role'],
       // include: [{
-      //   model: req.context.models.User,
+      //   model: User,
       //   attributes: ['id', 'email', 'username'],
       // }],
     });
@@ -106,21 +124,28 @@ router.post('/:sheetId/access-rights', auth, checkIsValidated, async (req, res) 
   try {
     const sheetId = Number(req.params.sheetId);
     const { email, role } = req.body;
+    const userId = Number(req.user.id);
+    const { models: { AccessRight, Sheet } } = req.context;
 
-    const sheet = await req.context.models.Sheet.findOne({
-      where: { id: sheetId },
+    const sheet = await Sheet.findOne({
+      attributes: ['ownerId'],
+      where: {
+        id: sheetId,
+      },
     });
     if (!sheet) {
       return res.status(404).send();
     }
-    if (sheet.ownerId !== req.user.id) {
+    if (sheet.ownerId !== userId) {
       return res.status(403).send();
     }
 
-    const accessRight = await req.context.models.AccessRight.create({
+    const accessRight = await AccessRight.create({
       sheetId,
       email,
       role,
+    }, {
+      returning: ['email', 'role'],
     });
 
     return res.send(accessRight);

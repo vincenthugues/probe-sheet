@@ -7,7 +7,6 @@ import morgan from 'morgan';
 import 'dotenv/config';
 
 import models, { sequelize } from './models';
-import mockData from './models/mockData';
 import authRouter from './routes/auth';
 import usersRouter from './routes/users';
 import sheetsRouter from './routes/sheets';
@@ -47,25 +46,7 @@ if (app.get('env') === 'development') {
   app.use(errorHandler());
 }
 
-const seedDatabase = async () => {
-  try {
-    await models.User.bulkCreate(mockData.users);
-    await models.Sheet.bulkCreate(mockData.sheets);
-    await models.Target.bulkCreate(mockData.targets);
-    await models.Probe.bulkCreate(mockData.probes);
-    await models.Comment.bulkCreate(mockData.comments);
-    await models.AccessRight.bulkCreate(mockData.accessRights);
-  } catch (err) {
-    /* eslint-disable-next-line no-console */
-    console.log('error while seeding database:', err.message);
-  }
-};
-
-sequelize.sync({ force: process.env.ERASE_DB_ON_SYNC }).then(() => {
-  if (process.env.ERASE_DB_ON_SYNC) {
-    seedDatabase();
-  }
-
+sequelize.sync().then(() => {
   app.listen(PORT, () => {
     /* eslint-disable-next-line no-console */
     console.log(`App listening on port ${PORT}`);
