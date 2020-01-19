@@ -30,6 +30,7 @@ import TargetsList from './TargetsList';
 import NewTargetBlock from './NewTargetBlock';
 
 const INITIAL_STATE = {
+  isRolesBlockOpen: false,
   isAddingTarget: false,
   targetDraft: {
     name: '',
@@ -198,6 +199,7 @@ class DataSheet extends Component {
       userRole,
     } = this.props;
     const {
+      isRolesBlockOpen,
       isAddingTarget,
       targetDraft,
       isAddingProbe,
@@ -216,7 +218,7 @@ class DataSheet extends Component {
 
     return (
       <Fragment>
-        {/* <h2>Daily probe data sheet</h2> */}
+        {/* Daily probe data sheet */}
         <h2>Feuille de cotation quotidienne</h2>
         <div>
           {sheet && (
@@ -225,16 +227,25 @@ class DataSheet extends Component {
               <div>{`Domaine de compétence : ${sheet.skillDomain}`}</div>
             </Fragment>
           )}
-          {userRole && (
-            <div>{`Role: ${ROLE_NAME[userRole]}`}</div>
-          )}
           <br />
-          <Contributors
-            sheetAccessRights={sheetAccessRights}
-            createSheetAccessRight={createSheetAccessRight}
-            sheetId={sheetId}
-            userRole={userRole}
-          />
+          <button type="button" onClick={() => this.setState({ isRolesBlockOpen: !isRolesBlockOpen })}>
+            {isRolesBlockOpen ? 'Fermer' : 'Editer les droits d\'accès'}
+          </button>
+          {isRolesBlockOpen
+          && (
+          <div style={{ border: '1px solid black' }}>
+            {userRole && (
+            <div>{`Role: ${ROLE_NAME[userRole]}`}</div>
+            )}
+            <Contributors
+              sheetAccessRights={sheetAccessRights}
+              createSheetAccessRight={createSheetAccessRight}
+              sheetId={sheetId}
+              userRole={userRole}
+            />
+          </div>
+          )
+  }
         </div>
 
         <TargetsList
