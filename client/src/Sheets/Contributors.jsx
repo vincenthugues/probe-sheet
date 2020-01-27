@@ -1,6 +1,9 @@
-import React, { Fragment, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { isEmpty } from 'ramda';
+import {
+  Button, Form, Header, Input, Modal, Select,
+} from 'semantic-ui-react';
 
 import { ROLE_NAME } from '../constants';
 
@@ -9,23 +12,33 @@ const ContributorsEditor = ({ createSheetAccessRight, sheetId }) => {
   const [newRole, setNewRole] = useState('viewer');
 
   return (
-    <div>
-      <form onSubmit={(e) => {
-        if (!isEmpty(newEmail)) {
-          createSheetAccessRight(sheetId, newEmail, newRole);
-          setNewEmail('');
-        }
-        e.preventDefault();
-      }}
-      >
-        <input placeholder="email" value={newEmail} onChange={({ target: { value } }) => setNewEmail(value.trim())} />
-        <select value={newRole} onChange={({ target: { value } }) => setNewRole(value)}>
-          <option value="viewer">{ROLE_NAME.viewer}</option>
-          <option value="contributor">{ROLE_NAME.contributor}</option>
-        </select>
-        <button type="submit" disabled={isEmpty(newEmail)}>Add</button>
-      </form>
-    </div>
+    <Form onSubmit={(e) => {
+      if (!isEmpty(newEmail)) {
+        createSheetAccessRight(sheetId, newEmail, newRole);
+        setNewEmail('');
+      }
+      e.preventDefault();
+    }}
+    >
+      <Input
+        placeholder="email"
+        icon="mail"
+        iconPosition="left"
+        value={newEmail}
+        onChange={(e, { value }) => setNewEmail(value.trim())}
+        size="small"
+      />
+      <Select
+        value={newRole}
+        onChange={(e, { value }) => setNewRole(value)}
+        options={[
+          { value: 'viewer', text: ROLE_NAME.viewer },
+          { value: 'contributor', text: ROLE_NAME.contributor },
+        ]}
+        size="small"
+      />
+      <Button type="submit" content="Ajouter" color="teal" disabled={isEmpty(newEmail)} compact />
+    </Form>
   );
 };
 ContributorsEditor.propTypes = {
@@ -33,7 +46,7 @@ ContributorsEditor.propTypes = {
   sheetId: PropTypes.number.isRequired,
 };
 
-const ContributorItem = ({ email, role }) => <span>{`${email} (${ROLE_NAME[role]})`}</span>;
+const ContributorItem = ({ email, role }) => <div>{`${email} (${ROLE_NAME[role]})`}</div>;
 ContributorItem.propTypes = {
   email: PropTypes.string.isRequired,
   role: PropTypes.string.isRequired,
@@ -41,19 +54,36 @@ ContributorItem.propTypes = {
 
 const Contributors = ({
   sheetAccessRights, createSheetAccessRight, sheetId, userRole,
-}) => (
-  <Fragment>
-    <div>
-      <span>Droits d&#8217;accès : </span>
-      {sheetAccessRights.map(({ email, role }) => (
-        <ContributorItem key={`${email}-${role}`} email={email} role={role} />
-      ))}
-    </div>
-    {userRole === 'owner' && (
-      <ContributorsEditor createSheetAccessRight={createSheetAccessRight} sheetId={sheetId} />
-    )}
-  </Fragment>
-);
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpen = () => setIsModalOpen(true);
+  const handleClose = () => setIsModalOpen(false);
+
+  return (
+    <Modal
+      trigger={<Button basic compact content="Droits d'accès" color="teal" size="mini" onClick={handleOpen} />}
+      open={isModalOpen}
+      onClose={handleClose}
+      size="small"
+    >
+      <Header icon="user" content="Droits d'accès" />
+      <Modal.Content>
+        <Modal.Description>
+          {sheetAccessRights.map(({ email, role }) => (
+            <ContributorItem key={`${email}-${role}`} email={email} role={role} />
+          ))}
+          {userRole === 'owner' && (
+            <ContributorsEditor createSheetAccessRight={createSheetAccessRight} sheetId={sheetId} />
+          )}
+        </Modal.Description>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button icon="close" content="Fermer" onClick={handleClose} />
+      </Modal.Actions>
+    </Modal>
+  );
+};
 Contributors.propTypes = {
   sheetAccessRights: PropTypes.arrayOf(PropTypes.shape({
     email: PropTypes.string.isRequired,

@@ -1,35 +1,38 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
-
-const FiltersView = styled.div`
-  display: flex;
-  flex: 1 0 auto;
-  justify-content: center;
-  margin: 0.2em;
-`;
+import { Button, Segment, Select } from 'semantic-ui-react';
 
 const Filters = ({
   filters, students, skillDomains, onUpdate, onClear,
 }) => (
-  <FiltersView>
+  <Segment basic textAlign="center">
     Filtres:
-    <select value={filters.student} onChange={({ target: { value } }) => onUpdate('student', value)}>
-      <option value="">--- Tous les élèves ---</option>
-      {students.map(student => (
-        <option key={student} value={student}>{student}</option>
-      ))}
-    </select>
-    <select value={filters.skillDomain} onChange={({ target: { value } }) => onUpdate('skillDomain', value)}>
-      <option value="">--- Tous domaines de compétence ---</option>
-      {skillDomains.map(skillDomain => (
-        <option key={skillDomain} value={skillDomain}>{skillDomain}</option>
-      ))}
-    </select>
-    <button type="button" onClick={onClear}>
-      Réinitialiser les filtres
-    </button>
-  </FiltersView>
+    <Select
+      placeholder="Elève"
+      value={filters.student}
+      onChange={(e, { value }) => onUpdate('student', value)}
+      options={[
+        { key: 'allStudents', value: '', text: 'Tous les élèves' },
+        ...students.map(student => ({ key: student, value: student, text: student })),
+      ]}
+      size="tiny"
+    />
+    <Select
+      placeholder="Domaine de compétence"
+      value={filters.skillDomain}
+      onChange={(e, { value }) => onUpdate('skillDomain', value)}
+      options={[
+        { key: 'allDomains', value: '', text: 'Tous domaines' },
+        ...skillDomains.map(skillDomain => ({
+          key: skillDomain,
+          value: skillDomain,
+          text: skillDomain,
+        })),
+      ]}
+      size="tiny"
+    />
+    <Button type="button" content="Réinitialiser les filtres" onClick={onClear} size="tiny" />
+  </Segment>
 );
 
 Filters.propTypes = {

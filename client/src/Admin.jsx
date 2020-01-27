@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import styled from 'styled-components';
+import {
+  Button, Container, Header, Table,
+} from 'semantic-ui-react';
 
 import { fetchUsers, validateUser } from './apiHandler';
-
-const MainView = styled.div`
-  padding: 10px;
-`;
 
 export default class SheetsListing extends Component {
   constructor(props) {
@@ -32,30 +30,31 @@ export default class SheetsListing extends Component {
     if (!isUserAuthenticated) return <Redirect to="/login" />;
 
     return (
-      <MainView>
-        <h2>Users</h2>
+      <Container>
+        <Header as="h2" content="Users" />
         {users.length > 0 && (
-          <table>
-            <thead>
-              <tr>
-                <th>id</th>
-                <th>username</th>
-                <th>email</th>
-                <th>role</th>
-                <th>isValidated</th>
-              </tr>
-            </thead>
-            <tbody>
-              { users.map(({
+          <Table compact striped selectable>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>id</Table.HeaderCell>
+                <Table.HeaderCell>username</Table.HeaderCell>
+                <Table.HeaderCell>email</Table.HeaderCell>
+                <Table.HeaderCell>role</Table.HeaderCell>
+                <Table.HeaderCell>isValidated</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {users.map(({
                 id, username, email, role, isValidated,
               }) => (
-                <tr key={id}>
-                  <td>{id}</td>
-                  <td>{username}</td>
-                  <td>{email}</td>
-                  <td>{role}</td>
-                  <td>
-                    <button
+                <Table.Row key={id}>
+                  <Table.Cell>{id}</Table.Cell>
+                  <Table.Cell>{username}</Table.Cell>
+                  <Table.Cell>{email}</Table.Cell>
+                  <Table.Cell>{role}</Table.Cell>
+                  <Table.Cell>
+                    <Button
+                      content={isValidated ? 'Validated' : 'Validate'}
                       type="button"
                       disabled={isValidated}
                       onClick={async () => {
@@ -63,16 +62,15 @@ export default class SheetsListing extends Component {
                         const updatedUsers = await fetchUsers();
                         this.setState({ users: updatedUsers });
                       }}
-                    >
-                      {isValidated ? 'Validated' : 'Validate'}
-                    </button>
-                  </td>
-                </tr>
+                      size="mini"
+                    />
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </tbody>
-          </table>
+            </Table.Body>
+          </Table>
         )}
-      </MainView>
+      </Container>
     );
   }
 }

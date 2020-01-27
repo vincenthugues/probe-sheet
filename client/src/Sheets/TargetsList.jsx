@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import PropTypes from 'prop-types';
+import { Divider } from 'semantic-ui-react';
 
 import TargetBlock from './TargetBlock';
 
@@ -9,16 +10,11 @@ const TargetsList = ({
   comments,
   targetsTableHeaders,
   targetsCellStreaks,
-  isAddingProbe,
-  addingProbeToTargetId,
-  probeDraft,
   isArchived,
-  onProbeDraftUpdate,
-  onOpenAddNewProbe,
-  onConfirmAddNewProbe,
-  onCancelAddNewProbe,
+  onCreateProbe,
   onUnarchiveTarget,
   userRole,
+  user,
 }) => (
   <Fragment>
     {targets.map((target) => {
@@ -28,57 +24,44 @@ const TargetsList = ({
       ));
 
       return (
-        <TargetBlock
-          key={target.id}
-          target={target}
-          targetTableHeaders={targetsTableHeaders[target.id] || []}
-          targetCellStreaks={targetsCellStreaks[target.id] || []}
-          probes={targetProbes}
-          isAddingProbe={isAddingProbe && addingProbeToTargetId === target.id}
-          probeDraft={probeDraft}
-          onProbeDraftUpdate={(fieldName, value) => onProbeDraftUpdate({
-            ...probeDraft,
-            [fieldName]: value,
-          })}
-          onOpenAddNewProbe={() => onOpenAddNewProbe(target.id)}
-          onConfirmAddNewProbe={() => onConfirmAddNewProbe(probeDraft, target.id)}
-          onCancelAddNewProbe={onCancelAddNewProbe}
-          comments={targetComments}
-          onUnarchive={() => onUnarchiveTarget(target.id)}
-          isArchived={isArchived}
-          userRole={userRole}
-        />
+        <Fragment key={target.id}>
+          <TargetBlock
+            target={target}
+            targetTableHeaders={targetsTableHeaders[target.id] || []}
+            targetCellStreaks={targetsCellStreaks[target.id] || []}
+            probes={targetProbes}
+            onCreateProbe={onCreateProbe}
+            comments={targetComments}
+            onUnarchive={() => onUnarchiveTarget(target.id)}
+            isArchived={isArchived}
+            userRole={userRole}
+            user={user}
+          />
+          <Divider hidden />
+        </Fragment>
       );
     })}
   </Fragment>
 );
+
 TargetsList.propTypes = {
   targets: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   probes: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   comments: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   targetsTableHeaders: PropTypes.shape({}).isRequired,
   targetsCellStreaks: PropTypes.shape({}),
-  isAddingProbe: PropTypes.bool,
-  addingProbeToTargetId: PropTypes.number,
-  probeDraft: PropTypes.shape({}),
   isArchived: PropTypes.bool,
-  onProbeDraftUpdate: PropTypes.func,
-  onOpenAddNewProbe: PropTypes.func,
-  onConfirmAddNewProbe: PropTypes.func,
-  onCancelAddNewProbe: PropTypes.func,
+  onCreateProbe: PropTypes.func.isRequired,
   onUnarchiveTarget: PropTypes.func,
   userRole: PropTypes.string,
+  user: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    username: PropTypes.string.isRequired,
+  }).isRequired,
 };
 TargetsList.defaultProps = {
   targetsCellStreaks: {},
-  isAddingProbe: false,
-  addingProbeToTargetId: null,
-  probeDraft: {},
   isArchived: false,
-  onProbeDraftUpdate: null,
-  onOpenAddNewProbe: null,
-  onConfirmAddNewProbe: null,
-  onCancelAddNewProbe: null,
   onUnarchiveTarget: null,
   userRole: null,
 };

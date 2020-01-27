@@ -2,34 +2,14 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { isEmpty } from 'ramda';
-import styled from 'styled-components';
+import {
+  Card, Container, Divider, Grid, Header,
+} from 'semantic-ui-react';
 
 import { getSheetsHandler, createSheetHandler } from '../actions';
 import { getFilteredSheetIds } from './utils';
 import Filters from './Filters';
-import NewSheetBlock from './NewSheetBlock';
-
-const SheetView = styled.div`
-  justify-items: space-between;
-  width: 140px;
-  height: 180px;
-  border: 1px solid;
-  margin: 18px;
-`;
-
-const LinkView = styled(Link)`
-  color: black;
-  text-decoration: none;
-`;
-
-const SheetsGroupView = styled.div`
-  display: flex;
-  flex: 1 0 auto;
-  flex-flow: row wrap;
-  justify-content: space-around;
-  padding: 10px;
-`;
+import NewSheet from './NewSheet';
 
 class SheetsListing extends Component {
   constructor(props) {
@@ -42,8 +22,6 @@ class SheetsListing extends Component {
         skillDomain: '',
       },
       filteredSheetIds: [],
-      sheetDraft: {},
-      isAddingSheet: false,
     };
   }
 
@@ -108,14 +86,8 @@ class SheetsListing extends Component {
     });
   };
 
-  onConfirmAddNewSheet = async () => {
+  onCreateSheet = async (sheetDraft) => {
     const { createSheet } = this.props;
-    const { sheetDraft } = this.state;
-
-    this.setState({
-      sheetDraft: {},
-      isAddingSheet: false,
-    });
 
     await createSheet(sheetDraft);
     this.computeSheetsMetadata();
@@ -130,8 +102,6 @@ class SheetsListing extends Component {
       skillDomains,
       filters,
       filteredSheetIds,
-      sheetDraft,
-      isAddingSheet,
     } = this.state;
 
     if (!isAuthenticated) return <Redirect to="/login" />;
@@ -146,7 +116,7 @@ class SheetsListing extends Component {
     ));
 
     return (
-      <Fragment>
+      <Container>
         <Filters
           filters={filters}
           students={students}
@@ -155,60 +125,44 @@ class SheetsListing extends Component {
           onClear={this.clearFilters}
         />
 
-        <h3>Owned</h3>
-        <SheetsGroupView>
+        <Header as="h3" content="Owned" />
+        <Grid columns={3} stackable>
           {ownedSheetIds.map((sheetId) => {
             const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
 
             return (
-              <LinkView key={sheetId} to={`/datasheet/${sheetId}`}>
-                <SheetView>
-                  <div>{student}</div>
-                  <div>{skillDomain}</div>
-                </SheetView>
-              </LinkView>
+              <Grid.Column key={sheetId}>
+                <Link to={`/datasheet/${sheetId}`}>
+                  <Card header={student} description={skillDomain} />
+                </Link>
+              </Grid.Column>
             );
           })}
-          <SheetView>
-            {isAddingSheet ? (
-              <NewSheetBlock
-                sheetDraft={sheetDraft}
-                onFieldUpdate={(fieldName, value) => this.setState({
-                  sheetDraft: { ...sheetDraft, [fieldName]: value },
-                })}
-              >
-                <div>
-                  <button type="button" disabled={isEmpty(sheetDraft.student)} onClick={this.onConfirmAddNewSheet}>
-                    Confirmer
-                  </button>
-                  <button type="button" onClick={() => this.setState({ isAddingSheet: false })}>
-                    Annuler
-                  </button>
-                </div>
-              </NewSheetBlock>
-            ) : (
-              <button type="button" onClick={() => this.setState({ isAddingSheet: true, sheetDraft: { student: '', skillDomain: '' } })}>
-                Nouvelle feuille
-              </button>
-            )}
-          </SheetView>
-        </SheetsGroupView>
-        <h3>Shared with me</h3>
-        <SheetsGroupView>
-          {sharedSheetIds.map((sheetId) => {
-            const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
+          <Grid.Column>
+            <NewSheet onCreateSheet={this.onCreateSheet} />
+          </Grid.Column>
+        </Grid>
 
-            return (
-              <LinkView key={sheetId} to={`/datasheet/${sheetId}`}>
-                <SheetView>
-                  <div>{student}</div>
-                  <div>{skillDomain}</div>
-                </SheetView>
-              </LinkView>
-            );
-          })}
-        </SheetsGroupView>
-      </Fragment>
+        {sharedSheetIds.length ? (
+          <Fragment>
+            <Divider />
+            <Header as="h3" content="Shared with me" />
+            <Grid columns={3} stackable>
+              {sharedSheetIds.map((sheetId) => {
+                const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
+
+                return (
+                  <Grid.Column key={sheetId}>
+                    <Link to={`/datasheet/${sheetId}`}>
+                      <Card header={student} description={skillDomain} />
+                    </Link>
+                  </Grid.Column>
+                );
+              })}
+            </Grid>
+          </Fragment>
+        ) : null}
+      </Container>
     );
   }
 }

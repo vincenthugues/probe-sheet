@@ -1,8 +1,10 @@
 import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
 import { connect } from 'react-redux';
-import { isEmpty, lensPath, set } from 'ramda';
+import { lensPath, set } from 'ramda';
+import {
+  Card, Container, Divider, Header, Segment,
+} from 'semantic-ui-react';
 
 import {
   getSheetHandler,
@@ -15,49 +17,19 @@ import {
   getCommentsHandler,
   createCommentHandler,
 } from '../actions';
-import {
-  PROBE_TYPE,
-  DEFAULT_BASELINE_PROBES,
-  DEFAULT_DAILY_PROBES_STREAK,
-  TARGETS_AUTO_ARCHIVING,
-  ROLE_NAME,
-} from '../constants';
+import { PROBE_TYPE, TARGETS_AUTO_ARCHIVING, ROLE_NAME } from '../constants';
 import {
   getTargetsTableHeaders, getTargetsCellStreaks, guessNextProbeType, getUserRole,
 } from './utils';
 import Contributors from './Contributors';
 import TargetsList from './TargetsList';
-import NewTargetBlock from './NewTargetBlock';
+import NewTarget from './NewTarget';
 
 const INITIAL_STATE = {
-  isRolesBlockOpen: false,
-  isAddingTarget: false,
-  targetDraft: {
-    name: '',
-  },
-  isAddingProbe: false,
-  addingProbeToTargetId: null,
-  probeDraft: {},
-
   targetsTableHeaders: {},
   targetCellStreaks: {},
   archivedTargetsIds: [],
 };
-
-const SeparatorView = styled.div`
-  display: block;
-  overflow: hidden;
-  border-style: inset;
-  border-width: 1px;
-
-  margin: 1.2em auto;
-  width: 60%;
-`;
-
-const AddTargetButtonView = styled.button`
-  font-size: 1.2rem;
-  margin: auto 24px;
-`;
 
 class DataSheet extends Component {
   state = INITIAL_STATE;
@@ -83,48 +55,28 @@ class DataSheet extends Component {
     this.computeTargetsMetadata();
   }
 
-  onOpenAddNewProbe = (selectedTargetId) => {
-    const { targets, probes } = this.props;
-
-    this.setState(({ targetsCellStreaks }) => ({
-      isAddingProbe: true,
-      addingProbeToTargetId: selectedTargetId,
-      probeDraft: this.getNextProbeDraft(
-        targets.find(({ id }) => id === selectedTargetId),
-        probes.filter(({ targetId }) => targetId === selectedTargetId),
-        targetsCellStreaks[selectedTargetId],
-      ),
-    }));
-  }
-
-  onConfirmAddNewProbe = async (probeDraft, currentTargetId) => {
+  onCreateProbe = async (targetId, probeDraft) => {
     const { createProbe, createComment } = this.props;
     const { probe } = await createProbe({
       ...probeDraft, // type, date, therapist, response, comment
-      targetId: currentTargetId,
+      targetId,
     });
 
     if (probeDraft.comment) {
       await createComment(probeDraft.comment, probe.id);
     }
 
-    this.setState({ isAddingProbe: false });
     this.computeTargetsMetadata();
   }
 
-  onCancelAddNewProbe = () => this.setState({ isAddingProbe: false })
-
-  onAddNewTarget = async () => {
+  onCreateTarget = async (targetDraft) => {
     const { user, createTarget, sheetId } = this.props;
-    const { targetDraft } = this.state;
 
     await createTarget({
       ...targetDraft,
       ownerId: user.id,
       sheetId,
     });
-
-    this.setState({ isAddingTarget: false });
     this.computeTargetsMetadata();
   }
 
@@ -142,17 +94,26 @@ class DataSheet extends Component {
   }
 
   getNextProbeDraft = (target, probes, targetCellStreaks) => {
-    const { user } = this.props;
     const { baselineProbesNumber, dailyProbesStreak } = target;
-
-    return {
-      type: guessNextProbeType(baselineProbesNumber, dailyProbesStreak, targetCellStreaks, probes),
-      date: '',
-      therapist: user.username,
-      response: true,
-      comment: '',
-    };
+    return guessNextProbeType(
+      baselineProbesNumber, dailyProbesStreak, targetCellStreaks, probes,
+    );
   }
+
+  computeArchivedTargetsIds = (targets, probes) => targets.reduce((acc, target) => {
+    const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+
+    if (targetProbes && targetProbes.length) {
+      const lastProbe = targetProbes[targetProbes.length - 1];
+
+      if (lastProbe.type === PROBE_TYPE.RETENTION
+          && lastProbe.response === true
+      ) {
+        return [...acc, target.id];
+      }
+    }
+    return acc;
+  }, []);
 
   // TODO: cleanup
   computeTargetsMetadata = () => {
@@ -163,21 +124,7 @@ class DataSheet extends Component {
 
     // toggle isArchived automatically
     if (TARGETS_AUTO_ARCHIVING) {
-      const archivedTargetsIds = targets.reduce((acc, target) => {
-        const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
-
-        if (targetProbes && targetProbes.length) {
-          const lastProbe = targetProbes[targetProbes.length - 1];
-
-          if (lastProbe.type === PROBE_TYPE.RETENTION
-              && lastProbe.response === true
-          ) {
-            return [...acc, target.id];
-          }
-        }
-        return acc;
-      }, []);
-
+      const archivedTargetsIds = this.computeArchivedTargetsIds(targets, probes);
       this.setState({ archivedTargetsIds });
     }
 
@@ -197,14 +144,9 @@ class DataSheet extends Component {
       comments,
       sheetId,
       userRole,
+      user,
     } = this.props;
     const {
-      isRolesBlockOpen,
-      isAddingTarget,
-      targetDraft,
-      isAddingProbe,
-      addingProbeToTargetId,
-      probeDraft,
       targetsTableHeaders = {},
       targetsCellStreaks = {},
       archivedTargetsIds,
@@ -219,34 +161,36 @@ class DataSheet extends Component {
     return (
       <Fragment>
         {/* Daily probe data sheet */}
-        <h2>Feuille de cotation quotidienne</h2>
-        <div>
+        <Header as="h2" content="Feuille de cotation quotidienne" textAlign="center" />
+        <Container>
           {sheet && (
-            <Fragment>
-              <div>{`Elève : ${sheet.student}`}</div>
-              <div>{`Domaine de compétence : ${sheet.skillDomain}`}</div>
-            </Fragment>
-          )}
-          <br />
-          <button type="button" onClick={() => this.setState({ isRolesBlockOpen: !isRolesBlockOpen })}>
-            {isRolesBlockOpen ? 'Fermer' : 'Editer les droits d\'accès'}
-          </button>
-          {isRolesBlockOpen
-          && (
-          <div style={{ border: '1px solid black' }}>
-            {userRole && (
-            <div>{`Role: ${ROLE_NAME[userRole]}`}</div>
-            )}
-            <Contributors
-              sheetAccessRights={sheetAccessRights}
-              createSheetAccessRight={createSheetAccessRight}
-              sheetId={sheetId}
-              userRole={userRole}
+            <Card
+              centered
+              description={(
+                <Fragment>
+                  <div>{`Elève : ${sheet.student}`}</div>
+                  <div>{`Domaine de compétence : ${sheet.skillDomain}`}</div>
+                  {userRole && (
+                    <div>
+                      Role:
+                      {' '}
+                      {ROLE_NAME[userRole]}
+                      {' '}
+                      <Contributors
+                        sheetAccessRights={sheetAccessRights}
+                        createSheetAccessRight={createSheetAccessRight}
+                        sheetId={sheetId}
+                        userRole={userRole}
+                      />
+                    </div>
+                  )}
+                </Fragment>
+              )}
             />
-          </div>
-          )
-  }
-        </div>
+          )}
+        </Container>
+
+        <Divider hidden />
 
         <TargetsList
           targets={activeTargets}
@@ -254,55 +198,32 @@ class DataSheet extends Component {
           comments={comments}
           targetsTableHeaders={targetsTableHeaders}
           targetsCellStreaks={targetsCellStreaks}
-          isAddingProbe={isAddingProbe}
-          addingProbeToTargetId={addingProbeToTargetId}
-          probeDraft={probeDraft}
-          onProbeDraftUpdate={newDraft => this.setState({ probeDraft: newDraft })}
-          onOpenAddNewProbe={this.onOpenAddNewProbe}
-          onConfirmAddNewProbe={this.onConfirmAddNewProbe}
-          onCancelAddNewProbe={this.onCancelAddNewProbe}
+          onCreateProbe={this.onCreateProbe}
           onUnarchiveTarget={this.onUnarchiveTarget}
           userRole={userRole}
+          user={user}
         />
         <br />
 
         {['owner', 'contributor'].includes(userRole) && (
-          isAddingTarget ? (
-            <NewTargetBlock
-              targetDraft={targetDraft}
-              onFieldUpdate={(fieldName, value) => this.setState({
-                targetDraft: {
-                  ...targetDraft,
-                  [fieldName]: value,
-                },
-              })}
-            >
-              <div>
-                <button type="button" disabled={isEmpty(targetDraft.name)} onClick={this.onAddNewTarget}>
-                  Confirmer
-                </button>
-                <button type="button" onClick={() => this.setState({ isAddingTarget: false })}>
-                  Annuler
-                </button>
-              </div>
-            </NewTargetBlock>
-          ) : (
-            <AddTargetButtonView onClick={() => this.setState({ isAddingTarget: true, targetDraft: { name: '', baselineProbesNumber: DEFAULT_BASELINE_PROBES, dailyProbesStreak: DEFAULT_DAILY_PROBES_STREAK } })}>
-              Nouvelle cible
-            </AddTargetButtonView>
-          )
+          <Segment basic textAlign="center">
+            <NewTarget onCreateTarget={this.onCreateTarget} />
+          </Segment>
         )}
 
-        <SeparatorView />
-
-        <TargetsList
-          targets={archivedTargets}
-          probes={probes}
-          comments={comments}
-          targetsTableHeaders={targetsTableHeaders}
-          targetsCellStreaks={targetsCellStreaks}
-          isArchived
-        />
+        {archivedTargets.length ? (
+          <Fragment>
+            <Divider section>Archivé</Divider>
+            <TargetsList
+              targets={archivedTargets}
+              probes={probes}
+              comments={comments}
+              targetsTableHeaders={targetsTableHeaders}
+              targetsCellStreaks={targetsCellStreaks}
+              isArchived
+            />
+          </Fragment>
+        ) : null}
       </Fragment>
     );
   }

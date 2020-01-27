@@ -1,78 +1,32 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import styled from 'styled-components';
-import { isEmpty } from 'ramda';
+import {
+  Container, Header, Segment, Table,
+} from 'semantic-ui-react';
 
 import { PROBE_TYPE, PROBE_TABLE_HEADER_BY_TYPE } from '../constants';
 import ProbeCell from './ProbeCell';
-import NewProbeBlock from './NewProbeBlock';
+import NewProbe from './NewProbe';
 
-const TargetView = styled.div`
-  display: flex;
-  flex: 1 0 auto;
-  flex-direction: column;
-
-  margin: 18px;
-`;
-
-const TableBlock = styled.div`
-  display: flex;
-  flex: 1 0 auto;
-  flex-direction: row;
-
-  margin: auto;
-`;
-
-const Table = styled.table`
-  border-collapse: collapse;
-`;
-
-const Th = styled.th`
-  border: solid 1px;
-  padding: 8px;
-  background-color: #EAEDEF;
-
-  max-width: 120px;
-`;
-
-const Td = styled.td`
-  border: solid 1px;
-  padding: 8px;
-
-  max-width: 80px;
-`;
-
-const AddProbeButtonView = styled.button`
-  height: 32px;
-  width: 40px;
-
-  font-size: 1.4rem;
-  margin: auto 24px;
-`;
-
-const CommentsView = styled.div`
-  text-align: left;
-  margin-left: 1em;
-`;
-
-const Header = ({ targetTableHeaders, dailyProbesStreak }) => (
-  <thead>
-    <tr>
-      <Th style={{ visibility: 'hidden' }} />
+const TableHeader = ({ targetTableHeaders, dailyProbesStreak }) => (
+  <Table.Header>
+    <Table.Row>
+      <Table.HeaderCell />
       {targetTableHeaders.map(({ type, span }, idx) => (
-        <Th
+        <Table.HeaderCell
           // eslint-disable-next-line react/no-array-index-key
           key={idx}
           colSpan={span}
           title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}
+          textAlign="left"
         >
           {PROBE_TABLE_HEADER_BY_TYPE[type]}
-        </Th>
+        </Table.HeaderCell>
       ))}
-    </tr>
-  </thead>
+    </Table.Row>
+  </Table.Header>
 );
-Header.propTypes = {
+TableHeader.propTypes = {
   dailyProbesStreak: PropTypes.number.isRequired,
   targetTableHeaders: PropTypes.arrayOf(
     PropTypes.shape({
@@ -83,14 +37,14 @@ Header.propTypes = {
 };
 
 const DateRow = ({ probes }) => (
-  <tr>
-    <Th>Date</Th>
-    {probes.map(({ id: probeId, date }) => (
-      <Td key={probeId}>
+  <Table.Row>
+    <Table.HeaderCell>Date</Table.HeaderCell>
+    {probes.map(({ id, date }) => (
+      <Table.Cell key={id}>
         {new Date(date).toLocaleDateString('fr-FR')}
-      </Td>
+      </Table.Cell>
     ))}
-  </tr>
+  </Table.Row>
 );
 DateRow.propTypes = {
   probes: PropTypes.arrayOf(
@@ -102,14 +56,14 @@ DateRow.propTypes = {
 };
 
 const TherapistRow = ({ probes }) => (
-  <tr>
-    <Th>Thérapeute</Th>
-    {probes.map(({ id: probeId, therapist }) => (
-      <Td key={probeId}>
+  <Table.Row>
+    <Table.HeaderCell>Thérapeute</Table.HeaderCell>
+    {probes.map(({ id, therapist }) => (
+      <Table.Cell key={id}>
         {therapist}
-      </Td>
+      </Table.Cell>
     ))}
-  </tr>
+  </Table.Row>
 );
 TherapistRow.propTypes = {
   probes: PropTypes.arrayOf(
@@ -123,8 +77,8 @@ TherapistRow.propTypes = {
 const ResponseRow = ({
   dailyProbesStreak, targetCellStreaks, probes, comments,
 }) => (
-  <tr>
-    <Th>Réponse</Th>
+  <Table.Row>
+    <Table.HeaderCell>Réponse</Table.HeaderCell>
     {probes.map(({ id, type, response }, idx) => {
       const comment = comments.find(({ probeId }) => probeId === id);
 
@@ -140,7 +94,7 @@ const ResponseRow = ({
         />
       );
     })}
-  </tr>
+  </Table.Row>
 );
 ResponseRow.propTypes = {
   dailyProbesStreak: PropTypes.number.isRequired,
@@ -162,70 +116,67 @@ ResponseRow.propTypes = {
 const TargetBlock = ({
   target: {
     name,
+    baselineProbesNumber,
     dailyProbesStreak,
   },
+  target,
   comments = [],
   probes,
   targetTableHeaders = [],
   targetCellStreaks = [],
-  isAddingProbe,
-  probeDraft,
-  onProbeDraftUpdate,
-  onOpenAddNewProbe,
-  onConfirmAddNewProbe,
-  onCancelAddNewProbe,
+  onCreateProbe,
   isArchived = false,
   onUnarchive,
   userRole,
+  user,
 }) => (
-  <TargetView style={{ color: isArchived ? '#B0B0B0' : '#000000' }}>
-    <h3>{name}</h3>
-    <TableBlock>
-      <Table>
-        <Header
-          targetTableHeaders={targetTableHeaders}
+  <Container>
+    <Header as="h3" content={name} textAlign="center" />
+    <Table celled definition collapsing compact size="small" style={{ margin: 'auto' }}>
+      <TableHeader
+        targetTableHeaders={targetTableHeaders}
+        dailyProbesStreak={dailyProbesStreak}
+      />
+      <Table.Body>
+        <DateRow probes={probes} />
+        <TherapistRow probes={probes} />
+        <ResponseRow
           dailyProbesStreak={dailyProbesStreak}
+          targetCellStreaks={targetCellStreaks}
+          probes={probes}
+          comments={comments}
         />
-        <tbody>
-          <DateRow probes={probes} />
-          <TherapistRow probes={probes} />
-          <ResponseRow
-            dailyProbesStreak={dailyProbesStreak}
-            targetCellStreaks={targetCellStreaks}
-            probes={probes}
-            comments={comments}
-          />
-        </tbody>
-      </Table>
+      </Table.Body>
+    </Table>
 
-      {isArchived && ['owner', 'contributor'].includes(userRole) && (
-        <AddProbeButtonView
-          onClick={onUnarchive}
-          style={{ color: '#000000', width: 'auto' }}
-        >
-          Désarchiver
-        </AddProbeButtonView>
-      )}
+    {!isArchived && ['owner', 'contributor'].includes(userRole) && (
+      <Segment basic textAlign="center">
+        <NewProbe
+          onCreateProbe={onCreateProbe}
+          user={user}
+          target={target}
+          targetCellStreaks={targetCellStreaks}
+          probes={probes}
+        />
+      </Segment>
+    )}
 
-      {isAddingProbe && ['owner', 'contributor'].includes(userRole) && (
-        <NewProbeBlock probeDraft={probeDraft} onFieldUpdate={onProbeDraftUpdate}>
-          <button type="button" disabled={isEmpty(probeDraft.date)} onClick={onConfirmAddNewProbe}>Confirmer</button>
-          <button type="button" onClick={onCancelAddNewProbe}>Annuler</button>
-        </NewProbeBlock>
-      )}
+    {/* {isArchived && ['owner', 'contributor'].includes(userRole) && (
+      <Button
+        content="Désarchiver"
+        onClick={onUnarchive}
+        style={{ color: '#000000', width: 'auto' }}
+      />
+    )} */}
 
-      {!isArchived && !isAddingProbe && ['owner', 'contributor'].includes(userRole) && (
-        <AddProbeButtonView onClick={onOpenAddNewProbe}>+</AddProbeButtonView>
-      )}
-    </TableBlock>
-    <CommentsView>
+    <Container textAlign="left">
       {comments.map(({ id, text }, index) => (
         <div key={id}>
           {`[${index + 1}] ${text}`}
         </div>
       ))}
-    </CommentsView>
-  </TargetView>
+    </Container>
+  </Container>
 );
 TargetBlock.propTypes = {
   target: PropTypes.shape({
@@ -252,21 +203,14 @@ TargetBlock.propTypes = {
     }),
   ).isRequired,
   targetCellStreaks: PropTypes.arrayOf(PropTypes.number).isRequired,
-  isAddingProbe: PropTypes.bool.isRequired,
-  probeDraft: PropTypes.shape({
-    type: PropTypes.string,
-    date: PropTypes.string,
-    therapist: PropTypes.string,
-    response: PropTypes.bool,
-    comment: PropTypes.string,
-  }).isRequired,
-  onProbeDraftUpdate: PropTypes.func.isRequired,
-  onOpenAddNewProbe: PropTypes.func.isRequired,
-  onConfirmAddNewProbe: PropTypes.func.isRequired,
-  onCancelAddNewProbe: PropTypes.func.isRequired,
+  onCreateProbe: PropTypes.func.isRequired,
   isArchived: PropTypes.bool,
   onUnarchive: PropTypes.func,
   userRole: PropTypes.string,
+  user: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    username: PropTypes.string.isRequired,
+  }).isRequired,
 };
 TargetBlock.defaultProps = {
   isArchived: false,

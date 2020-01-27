@@ -2,7 +2,7 @@ import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import { Provider, connect } from 'react-redux';
-import styled from 'styled-components';
+import { Container, Menu, Message } from 'semantic-ui-react';
 
 import store from './store';
 import { getAuthUserHandler, setIsAuthenticatedActionCreator } from './actions';
@@ -12,40 +12,24 @@ import Admin from './Admin';
 import SheetsListing from './Sheets/SheetsListing';
 import DataSheet from './Sheets/DataSheet';
 
-const MainView = styled.div`
-  text-align: center;
-`;
-
-const NavView = styled.nav`
-  display: flex;
-  flex: 1 0 auto;
-  justify-items: center;
-
-  background-color: #282c34;
-  align-items: center;
-  font-size: 1.4rem;
-  color: white;
-  padding-bottom: 10px;
-`;
-
-const NavLinkView = styled(Link)`
-  color: white;
-  margin: .4em;
-  text-decoration: none;
-`;
-
 const NavBar = ({ isAuthenticated, isAdmin }) => (
-  <NavView>
-    {isAuthenticated ? (
+  <Menu>
+    {isAuthenticated && (
       <Fragment>
-        <NavLinkView to="/">Index</NavLinkView>
-        {isAdmin ? <NavLinkView to="/admin">Admin</NavLinkView> : null}
-        <NavLinkView to="/logout">Déconnexion</NavLinkView>
+        <Menu.Item><Link to="/">Feuilles</Link></Menu.Item>
+        {isAdmin && <Menu.Item><Link to="/admin">Admin</Link></Menu.Item>}
       </Fragment>
-    ) : (
-      <NavLinkView to="/login">Connexion</NavLinkView>
     )}
-  </NavView>
+    <Menu.Menu position="right">
+      <Menu.Item>
+        {isAuthenticated ? (
+          <Link to="/logout">Déconnexion</Link>
+        ) : (
+          <Link to="/login">Connexion</Link>
+        )}
+      </Menu.Item>
+    </Menu.Menu>
+  </Menu>
 );
 NavBar.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
@@ -67,15 +51,15 @@ class MainRouter extends Component {
 
     return (
       <Router>
-        <MainView>
-          <NavBar isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
+        <NavBar isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
+        <Container>
           <Route path="/" exact component={SheetsListing} />
           <Route path="/login" exact component={Login} />
           <Route path="/logout" exact component={Logout} />
-          <Route path="/pending-validation" exact component={() => <div>Account pending validation</div>} />
+          <Route path="/pending-validation" exact component={() => <Message>Compte en attente de validation</Message>} />
           <Route path="/admin" exact component={Admin} />
           <Route path="/datasheet/:sheetId" component={DataSheet} />
-        </MainView>
+        </Container>
       </Router>
     );
   }

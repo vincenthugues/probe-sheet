@@ -1,109 +1,134 @@
-import React, { Component, Fragment } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import styled from 'styled-components';
+import {
+  Button, Container, Form, Grid, Header, Icon, Message, Segment,
+} from 'semantic-ui-react';
 
+import { isEmpty } from 'ramda';
 import { authenticate, createUser } from '../apiHandler';
 import { setIsAuthenticatedActionCreator, setUserActionCreator } from '../actions';
 
-const MainView = styled.div`
-  padding: 10px;
-`;
+const LoginForm = ({ onLoginConfirm, onSignupOpen }) => {
+  const [state, setState] = useState({ email: '', password: '' });
+  const { email, password } = state;
 
-class LoginBlock extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      email: '',
-      password: '',
-    };
-  }
+  const handleChange = (e, { name, value }) => setState({ ...state, [name]: value });
+  const handleSubmit = () => onLoginConfirm(email, password);
 
-  render() {
-    const { onLoginConfirm, onSignupOpen } = this.props;
-    const { email, password } = this.state;
+  return (
+    <Grid textAlign="center" style={{ height: '100vh' }} verticalAlign="top">
+      <Grid.Column style={{ maxWidth: 450 }}>
+        <Header as="h2" color="teal" textAlign="center">
+          <Icon name="user circle" size="small" />
+          Connexion
+        </Header>
+        <Form size="large" onSubmit={handleSubmit}>
+          <Segment>
+            <Form.Input
+              placeholder="Email"
+              name="email"
+              value={email}
+              fluid
+              icon="mail"
+              iconPosition="left"
+              autoComplete="email"
+              onChange={handleChange}
+            />
+            <Form.Input
+              placeholder="Mot de passe"
+              name="password"
+              value={password}
+              type="password"
+              fluid
+              icon="lock"
+              iconPosition="left"
+              autoComplete="current-password"
+              onChange={handleChange}
+            />
 
-    return (
-      <Fragment>
-        <form onSubmit={(e) => {
-          onLoginConfirm(email, password);
-          e.preventDefault();
-        }}
-        >
-          <label htmlFor="email">
-            Email:
-            <br />
-            <input id="email" type="text" autoComplete="email" value={email} onChange={e => this.setState({ email: e.target.value })} />
-          </label>
-          <br />
-          <label htmlFor="password">
-            Password:
-            <br />
-            <input id="password" type="password" autoComplete="current-password" value={password} onChange={e => this.setState({ password: e.target.value })} />
-          </label>
-          <br />
-          <button type="submit">Connexion</button>
-        </form>
-        <br />
-        <br />
-        <button type="button" onClick={onSignupOpen}>Créer un compte</button>
-      </Fragment>
-    );
-  }
-}
-LoginBlock.propTypes = {
+            <Button color="teal" content="Se connecter" disabled={isEmpty(email) || isEmpty(password)} />
+          </Segment>
+        </Form>
+        <Message>
+          Pas de compte ?
+          {' '}
+          <Button basic compact type="button" content="Créer un compte utilisateur" onClick={onSignupOpen} />
+        </Message>
+      </Grid.Column>
+    </Grid>
+  );
+};
+LoginForm.propTypes = {
   onLoginConfirm: PropTypes.func.isRequired,
   onSignupOpen: PropTypes.func.isRequired,
 };
 
-class SignupBlock extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      email: '',
-      username: '',
-      password: '',
-    };
-  }
+const SignupForm = ({ onSignupConfirm, onSignupClose }) => {
+  const [state, setState] = useState({
+    email: '',
+    username: '',
+    password: '',
+  });
+  const { email, username, password } = state;
 
-  render() {
-    const { onSignupConfirm, onSignupClose } = this.props;
-    const { email, username, password } = this.state;
+  const handleChange = (e, { name, value }) => setState({ ...state, [name]: value });
+  const handleSubmit = () => onSignupConfirm(email, username, password);
 
-    return (
-      <form onSubmit={(e) => {
-        onSignupConfirm(email, username, password);
-        e.preventDefault();
-      }}
-      >
-        <label htmlFor="username">
-          Username:
-          <br />
-          <input id="username" type="text" autoComplete="username" value={username} onChange={e => this.setState({ username: e.target.value })} />
-        </label>
-        <br />
-        <label htmlFor="email">
-          Email:
-          <br />
-          <input id="email" type="text" autoComplete="email" value={email} onChange={e => this.setState({ email: e.target.value })} />
-        </label>
-        <br />
-        <label htmlFor="password">
-          Password:
-          <br />
-          <input id="password" type="password" autoComplete="new-password" value={password} onChange={e => this.setState({ password: e.target.value })} />
-        </label>
-        <br />
-        <button type="submit">Inscription</button>
-        <br />
-        <br />
-        <button type="button" onClick={onSignupClose}>Annuler</button>
-      </form>
-    );
-  }
-}
-SignupBlock.propTypes = {
+  return (
+    <Grid textAlign="center" style={{ height: '100vh' }} verticalAlign="top">
+      <Grid.Column style={{ maxWidth: 450 }}>
+        <Header as="h2" color="teal" textAlign="center">
+          <Icon name="user circle" size="small" />
+          Inscription
+        </Header>
+        <Form size="large" onSubmit={handleSubmit}>
+          <Segment>
+            <Form.Input
+              placeholder="Nom d'utilisateur"
+              name="username"
+              value={username}
+              fluid
+              icon="user"
+              iconPosition="left"
+              autoComplete="username"
+              onChange={handleChange}
+            />
+            <Form.Input
+              placeholder="Email"
+              name="email"
+              value={email}
+              fluid
+              icon="mail"
+              iconPosition="left"
+              autoComplete="email"
+              onChange={handleChange}
+            />
+            <Form.Input
+              placeholder="Mot de passe"
+              name="password"
+              value={password}
+              type="password"
+              fluid
+              icon="lock"
+              iconPosition="left"
+              autoComplete="new-password"
+              onChange={handleChange}
+            />
+            <Button color="teal" type="submit" content="Inscription" disabled={isEmpty(email) || isEmpty(username) || isEmpty(password)} />
+          </Segment>
+        </Form>
+        <Message>
+          Déjà un compte ?
+          {' '}
+          <Button basic compact type="button" content="Se connecter" onClick={onSignupClose} />
+        </Message>
+      </Grid.Column>
+    </Grid>
+  );
+};
+SignupForm.propTypes = {
   onSignupConfirm: PropTypes.func.isRequired,
   onSignupClose: PropTypes.func.isRequired,
 };
@@ -119,68 +144,59 @@ const mapDispatchToProps = dispatch => ({
   },
 });
 
-class Login extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      isSignupOpen: false,
-      errorMessage: null,
-    };
-  }
+const Login = ({ isAuthenticated, onAuth }) => {
+  const [state, setState] = useState({
+    isSignupOpen: false,
+    errorMessage: null,
+  });
+  const { isSignupOpen, errorMessage } = state;
 
-  login = async (email, password) => {
+  const login = async (email, password) => {
     try {
-      const { onAuth } = this.props;
       const { token, user } = await authenticate(email, password);
 
       localStorage.setItem('token', token);
 
-      this.setState({ errorMessage: null });
+      setState({ ...state, errorMessage: null });
 
       onAuth(user);
     } catch (error) {
-      this.setState({ errorMessage: error.message });
+      setState({ ...state, errorMessage: error.message });
     }
-  }
+  };
 
-  signup = async (email, username, password) => {
+  const signup = async (email, username, password) => {
     try {
-      const { onAuth } = this.props;
       const { token, user } = await createUser(username, email, password);
 
       localStorage.setItem('token', token);
 
-      this.setState({ errorMessage: null });
+      setState({ ...state, errorMessage: null });
 
       onAuth(user);
     } catch (error) {
-      this.setState({ errorMessage: error.message });
+      setState({ ...state, errorMessage: error.message });
     }
-  }
+  };
 
-  render() {
-    const { isAuthenticated } = this.props;
-    const { isSignupOpen, errorMessage } = this.state;
-
-    return (
-      <MainView>
-        {isAuthenticated && <Redirect to="/" />}
-        {errorMessage && <div>{errorMessage}</div>}
-        {isSignupOpen ? (
-          <SignupBlock
-            onSignupConfirm={this.signup}
-            onSignupClose={() => this.setState({ isSignupOpen: false })}
-          />
-        ) : (
-          <LoginBlock
-            onLoginConfirm={this.login}
-            onSignupOpen={() => this.setState({ isSignupOpen: true })}
-          />
-        )}
-      </MainView>
-    );
-  }
-}
+  return (
+    <Container>
+      {isAuthenticated && <Redirect to="/" />}
+      {errorMessage && <div>{errorMessage}</div>}
+      {isSignupOpen ? (
+        <SignupForm
+          onSignupConfirm={signup}
+          onSignupClose={() => setState({ ...state, isSignupOpen: false })}
+        />
+      ) : (
+        <LoginForm
+          onLoginConfirm={login}
+          onSignupOpen={() => setState({ ...state, isSignupOpen: true })}
+        />
+      )}
+    </Container>
+  );
+};
 Login.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
   onAuth: PropTypes.func.isRequired,
