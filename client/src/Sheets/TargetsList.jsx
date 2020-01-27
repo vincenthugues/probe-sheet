@@ -18,7 +18,9 @@ const TargetsList = ({
 }) => (
   <Fragment>
     {targets.map((target) => {
-      const targetProbes = probes.filter(({ targetId }) => targetId === target.id);
+      const targetProbes = probes
+        .filter(({ targetId }) => targetId === target.id)
+        .sort(({ date: date1 }, { date: date2 }) => new Date(date1) - new Date(date2));
       const targetComments = comments.filter(({ probeId }) => (
         targetProbes.find(({ id }) => id === probeId)
       ));

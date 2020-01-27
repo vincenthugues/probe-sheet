@@ -20,7 +20,11 @@ export const getFilteredSheetIds = (sheets, filters = {}) => sheets
   .map(({ id }) => id);
 
 export const getTargetsTableHeaders = (targets, probes) => targets.reduce((acc1, { id }) => {
-  const targetProbes = probes.filter(({ targetId }) => targetId === id);
+  const targetProbes = probes
+    .filter(({ targetId }) => targetId === id)
+    .sort(
+      ({ date: date1 }, { date: date2 }) => new Date(date1) - new Date(date2),
+    );
 
   return {
     ...acc1,
@@ -47,7 +51,11 @@ export const getTargetsCellStreaks = (targets, probes) => {
   let counters = [];
 
   return targets.reduce((acc, { id }) => {
-    const targetProbes = probes.filter(({ targetId }) => targetId === id);
+    const targetProbes = probes
+      .filter(({ targetId }) => targetId === id)
+      .sort(
+        ({ date: date1 }, { date: date2 }) => new Date(date1) - new Date(date2),
+      );
 
     return {
       ...acc,
