@@ -46,45 +46,55 @@ export const getTargetsTableHeaders = (targets, probes) => targets.reduce((acc1,
   };
 }, {});
 
-// TODO: refactor getTargetsCellStreaks logic
+export const sortByDate = arr => arr.sort(
+  ({ date: date1 }, { date: date2 }) => new Date(date1) - new Date(date2),
+);
+
+export const getOrderedTargetProbes = (probes, targetId) => sortByDate(
+  probes.filter(probe => probe.targetId === targetId),
+);
+
+export const isContinuingProbeStreak = (probe, prevProbe) => prevProbe
+  && prevProbe.type === probe.type
+  && prevProbe.response === true
+  && probe.response === true;
+
+export const getProbeStreak = (probes, probeType) => {
+  const probeContinuesStreak = (probe, type) => probe && probe.response && probe.type === type;
+
+  let counter = 0;
+  while (probeContinuesStreak(probes[counter], probeType)) {
+    counter += 1;
+  }
+
+  return counter;
+};
+
 export const getTargetsCellStreaks = (targets, probes) => {
-  let counters = [];
+  const probeStreaksByTarget = {};
 
-  return targets.reduce((acc, { id }) => {
-    const targetProbes = probes
-      .filter(({ targetId }) => targetId === id)
-      .sort(
-        ({ date: date1 }, { date: date2 }) => new Date(date1) - new Date(date2),
-      );
+  targets.forEach(({ id: targetId }) => {
+    const targetProbes = getOrderedTargetProbes(probes, targetId);
 
-    return {
-      ...acc,
-      [id]: targetProbes.map(({ type, response }, i) => {
-        let counter = response ? 1 : 0;
-        if (response && [PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(type)) {
-          if (
-            i > 0
-              && targetProbes[i - 1].type === type
-              && targetProbes[i - 1].response === true
-          ) {
-            counter = counters[i - 1];
-          } else {
-            while (
-              targetProbes[i + counter]
-                && targetProbes[i + counter].type === type
-                && targetProbes[i + counter].response === true
-            ) {
-              counter += 1;
-            }
-          }
-        }
+    probeStreaksByTarget[targetId] = targetProbes.reduce((probeStreaks, probe, i) => {
+      if (!probe.response) return [...probeStreaks, 0];
 
-        counters = [...counters, counter];
+      if ([PROBE_TYPE.BASELINE, PROBE_TYPE.DAILY].includes(probe.type)) {
+        const prevProbe = targetProbes[i - 1];
 
-        return counter;
-      }),
-    };
-  }, {});
+        return [
+          ...probeStreaks,
+          isContinuingProbeStreak(probe, prevProbe)
+            ? probeStreaks[i - 1]
+            : getProbeStreak(targetProbes.slice(i), probe.type),
+        ];
+      }
+
+      return [...probeStreaks, 1];
+    }, []);
+  });
+
+  return probeStreaksByTarget;
 };
 
 export const guessNextProbeType = (

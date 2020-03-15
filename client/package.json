@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "http://localhost:5000/",
+  "scripts": {
+    "start": "PORT=3000 react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
   "dependencies": {
     "axios": "^0.18.1",
     "prop-types": "^15.7.2",
@@ -16,12 +22,6 @@
     "redux": "^4.0.5",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2"
-  },
-  "scripts": {
-    "start": "PORT=3000 react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
   },
   "browserslist": [
     ">0.2%",
