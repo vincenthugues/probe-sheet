@@ -1,68 +1,27 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 
 import auth from '../middleware/auth';
 import checkIsAdmin from '../middleware/checkIsAdmin';
+import { hashPassword, getSignedToken } from './utils';
 
 const USER_FIELDS = ['id', 'username', 'email', 'role', 'isValidated'];
 
 const router = express.Router();
 
-router.get('/', auth, checkIsAdmin, async (req, res) => {
-  const { models: { User } } = req.context;
+router.get('/', auth, checkIsAdmin, async ({ context }, res) => {
+  const { models: { User } } = context;
 
   const users = await User.findAll({
     attributes: USER_FIELDS,
   });
+
   return res.send(users);
 });
 
-const createUserWithToken = async (User, username, password, email) => {
-  const saltRounds = 10;
-
-  const newUserWithToken = await bcrypt.genSalt(saltRounds, (err1, salt) => {
-    if (err1) throw err1;
-
-    return bcrypt.hash(password, salt, async (err2, hash) => {
-      if (err2) throw err2;
-
-      const newUser = await User.create({
-        username,
-        email,
-        password: hash,
-      }, {
-        returning: USER_FIELDS,
-      });
-
-      const { id, role, isValidated } = newUser.dataValues;
-
-      const token = jwt.sign(
-        { id },
-        process.env.JWT_SECRET,
-        { expiresIn: 24 * 3600 },
-      );
-
-      return {
-        token,
-        user: {
-          id,
-          username,
-          email,
-          role,
-          isValidated,
-        },
-      };
-    });
-  });
-
-  return newUserWithToken;
-};
-
-router.post('/', async (req, res) => {
+router.post('/', async ({ context, body }, res) => {
   try {
-    const { username, email, password } = req.body;
-    const { models: { User } } = req.context;
+    const { models: { User } } = context;
+    const { username, email, password } = body;
 
     if (!username || !email || !password) {
       console.log('Missing one of required field(s) username, email, password');
@@ -71,30 +30,40 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({
-      attributes: ['id'],
-      where: { email },
-    });
-    if (existingUser) {
+    const matchingUsersByEmail = await User.count({ where: { email } });
+    if (matchingUsersByEmail !== 0) {
       console.log('A user with this email already exists');
       return res.status(400).send({
         msg: 'A user with this email already exists',
       });
     }
 
-    const newUserWithToken = await createUserWithToken(User, username, password, email);
-    return res.status(200).send(newUserWithToken);
+    const user = await User.create({
+      username,
+      email,
+      password: await hashPassword(password),
+    }, {
+      returning: USER_FIELDS,
+      raw: true,
+    });
+
+    const token = getSignedToken(user.id);
+
+    return res.status(200).send({
+      user,
+      token,
+    });
   } catch (err) {
     console.log('Error while creating user:', err);
     return res.status(400).send(err);
   }
 });
 
-router.get('/:userId', auth, async (req, res) => {
+router.get('/:userId', auth, async ({ context, params }, res) => {
   try {
-    const { models: { User } } = req.context;
+    const { models: { User } } = context;
 
-    const user = await User.findByPk(req.params.userId, { attributes: USER_FIELDS });
+    const user = await User.findByPk(params.userId, { attributes: USER_FIELDS });
     return res.send(user);
   } catch (err) {
     console.log('Error while getting user:', err);
@@ -102,10 +71,10 @@ router.get('/:userId', auth, async (req, res) => {
   }
 });
 
-router.post('/:userId/validate', auth, checkIsAdmin, async (req, res) => {
+router.post('/:userId/validate', auth, checkIsAdmin, async ({ context, params }, res) => {
   try {
-    const { userId } = req.params;
-    const { models: { User } } = req.context;
+    const { models: { User } } = context;
+    const { userId } = params;
 
     if (!userId) {
       return res.status(400).send({ msg: 'Missing required userId' });

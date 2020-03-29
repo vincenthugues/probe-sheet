@@ -1,12 +1,28 @@
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 
-export const getVisibleSheetIds = async (req) => {
-  const { models: { AccessRight } } = req.context;
+export const hashPassword = async (password) => {
+  const saltRounds = 10;
+  const salt = await bcrypt.genSalt(saltRounds);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  return hashedPassword;
+};
+
+export const getSignedToken = userId => jwt.sign(
+  { id: userId },
+  process.env.JWT_SECRET,
+  { expiresIn: 24 * 3600 },
+);
+
+export const getVisibleSheetIds = async ({ context, user }) => {
+  const { models: { AccessRight } } = context;
 
   const accessRights = await AccessRight.findAll({
     attributes: ['sheetId'],
     where: {
-      email: req.user.email,
+      email: user.email,
     },
     raw: true,
   });
@@ -15,13 +31,13 @@ export const getVisibleSheetIds = async (req) => {
   return visibleSheetIds;
 };
 
-export const getEditableSheetIds = async (req) => {
-  const { models: { AccessRight } } = req.context;
+export const getEditableSheetIds = async ({ context, user }) => {
+  const { models: { AccessRight } } = context;
 
   const accessRights = await AccessRight.findAll({
     attributes: ['sheetId'],
     where: {
-      email: req.user.email,
+      email: user.email,
       role: 'contributor',
     },
     raw: true,
@@ -31,17 +47,17 @@ export const getEditableSheetIds = async (req) => {
   return editableSheetIds;
 };
 
-export const getVisibleTargetIds = async (req) => {
-  const userId = req.user.id;
-  const { models: { Sheet, Target } } = req.context;
+export const getVisibleTargetIds = async ({ context, user }) => {
+  const userId = user.id;
+  const { models: { Sheet, Target } } = context;
 
-  const visibleSheetIds = await getVisibleSheetIds(req);
+  const visibleSheetIds = await getVisibleSheetIds({ context, user });
   const visibleTargets = await Target.findAll({
     attributes: ['id'],
     where: {
       [Op.or]: [
         { ownerId: userId },
-        { sheetId: { [Op.in]: visibleSheetIds } },
+        { sheetId: visibleSheetIds },
         { '$sheet.ownerId$': userId },
       ],
     },
@@ -56,16 +72,16 @@ export const getVisibleTargetIds = async (req) => {
   return visibleTargetIds;
 };
 
-export const getEditableTargetIds = async (req) => {
-  const { models: { Target } } = req.context;
+export const getEditableTargetIds = async ({ context, user }) => {
+  const { models: { Target } } = context;
 
-  const editableSheetIds = await getEditableSheetIds(req);
+  const editableSheetIds = await getEditableSheetIds({ context, user });
   const editableTargets = await Target.findAll({
     attributes: ['id'],
     where: {
       [Op.or]: [
-        { ownerId: req.user.id },
-        { sheetId: { [Op.in]: editableSheetIds } },
+        { ownerId: user.id },
+        { sheetId: editableSheetIds },
       ],
     },
     raw: true,
@@ -75,16 +91,16 @@ export const getEditableTargetIds = async (req) => {
   return editableTargetIds;
 };
 
-export const getVisibleProbeIds = async (req) => {
-  const { models: { Probe } } = req.context;
+export const getVisibleProbeIds = async ({ context, user }) => {
+  const { models: { Probe } } = context;
 
-  const visibleTargetIds = await getVisibleTargetIds(req);
+  const visibleTargetIds = await getVisibleTargetIds({ context, user });
   const visibleProbes = await Probe.findAll({
     attributes: ['id'],
     where: {
       [Op.or]: [
-        { ownerId: req.user.id },
-        { targetId: { [Op.in]: visibleTargetIds } },
+        { ownerId: user.id },
+        { targetId: visibleTargetIds },
       ],
     },
     raw: true,
@@ -94,16 +110,16 @@ export const getVisibleProbeIds = async (req) => {
   return visibleProbeIds;
 };
 
-export const getEditableProbeIds = async (req) => {
-  const { models: { Probe } } = req.context;
+export const getEditableProbeIds = async ({ context, user }) => {
+  const { models: { Probe } } = context;
 
-  const editableTargetIds = await getEditableTargetIds(req);
+  const editableTargetIds = await getEditableTargetIds({ context, user });
   const editableProbes = await Probe.findAll({
     attributes: ['id'],
     where: {
       [Op.or]: [
-        { ownerId: req.user.id },
-        { targetId: { [Op.in]: editableTargetIds } },
+        { ownerId: user.id },
+        { targetId: editableTargetIds },
       ],
     },
     raw: true,
