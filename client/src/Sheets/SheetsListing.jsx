@@ -125,7 +125,7 @@ class SheetsListing extends Component {
           onClear={this.clearFilters}
         />
 
-        <Header as="h3" content="Owned" />
+        <Header as="h3" content="Mes feuilles" />
         <Grid columns={3} stackable>
           {ownedSheetIds.map((sheetId) => {
             const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
@@ -146,7 +146,7 @@ class SheetsListing extends Component {
         {sharedSheetIds.length ? (
           <Fragment>
             <Divider />
-            <Header as="h3" content="Shared with me" />
+            <Header as="h3" content="Feuilles partagées avec moi" />
             <Grid columns={3} stackable>
               {sharedSheetIds.map((sheetId) => {
                 const { student, skillDomain } = sheets.find(({ id }) => id === sheetId);
