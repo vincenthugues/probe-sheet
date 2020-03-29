@@ -18,7 +18,7 @@ const TableHeader = ({ targetTableHeaders, dailyProbesStreak }) => (
           key={idx}
           colSpan={span}
           title={type === PROBE_TYPE.DAILY ? `Critère d'acquisition de ${dailyProbesStreak} réponses correctes consécutives` : null}
-          textAlign="left"
+          textAlign="center"
         >
           {PROBE_TABLE_HEADER_BY_TYPE[type]}
         </Table.HeaderCell>
