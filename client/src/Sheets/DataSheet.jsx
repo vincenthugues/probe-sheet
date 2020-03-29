@@ -45,12 +45,10 @@ class DataSheet extends Component {
     await getSheetAccessRights(sheetId);
 
     const { targets } = await getTargets(sheetId);
-    for (const { id: targetId } of targets) {
+    await Promise.all(targets.map(async ({ id: targetId }) => {
       const { probes } = await getProbes(targetId);
-      for (const { id: probeId } of probes) {
-        await getComments(probeId);
-      }
-    }
+      await Promise.all(probes.map(({ id: probeId }) => getComments(probeId)));
+    }));
 
     this.computeTargetsMetadata();
   }
@@ -107,7 +105,7 @@ class DataSheet extends Component {
       const lastProbe = targetProbes[targetProbes.length - 1];
 
       if (lastProbe.type === PROBE_TYPE.RETENTION
-          && lastProbe.response === true
+        && lastProbe.response === true
       ) {
         return [...acc, target.id];
       }
