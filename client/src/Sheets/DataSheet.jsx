@@ -293,7 +293,7 @@ const mapStateToProps = (
   const id = Number(sheetId);
   const sheet = sheets.find(s => s.id === id);
   const sheetAccessRights = sheetsAccessRights[id] || [];
-  const userRole = sheet ? getUserRole(sheet, user, sheetAccessRights) : null;
+  const userRole = sheet && user ? getUserRole(sheet, user, sheetAccessRights) : null;
 
   return ({
     user,
