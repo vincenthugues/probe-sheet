@@ -10,7 +10,7 @@ import { isEmpty } from 'ramda';
 import { authenticate, createUser } from '../apiHandler';
 import { setIsAuthenticatedActionCreator, setUserActionCreator } from '../actions';
 
-const LoginForm = ({ onLoginConfirm, onSignupOpen }) => {
+const LoginForm = ({ onLoginConfirm, onSignupOpen, errorMessage }) => {
   const [state, setState] = useState({ email: '', password: '' });
   const { email, password } = state;
 
@@ -49,11 +49,11 @@ const LoginForm = ({ onLoginConfirm, onSignupOpen }) => {
             />
 
             <Button color="teal" content="Se connecter" disabled={isEmpty(email) || isEmpty(password)} />
+            {errorMessage ? <Message>{errorMessage}</Message> : null}
           </Segment>
         </Form>
         <Message>
-          Pas de compte ?
-          {' '}
+          Pas encore inscrit(e) ?
           <Button basic compact type="button" content="Créer un compte utilisateur" onClick={onSignupOpen} />
         </Message>
       </Grid.Column>
@@ -63,9 +63,13 @@ const LoginForm = ({ onLoginConfirm, onSignupOpen }) => {
 LoginForm.propTypes = {
   onLoginConfirm: PropTypes.func.isRequired,
   onSignupOpen: PropTypes.func.isRequired,
+  errorMessage: PropTypes.string,
+};
+LoginForm.defaultProps = {
+  errorMessage: null,
 };
 
-const SignupForm = ({ onSignupConfirm, onSignupClose }) => {
+const SignupForm = ({ onSignupConfirm, onSignupClose, errorMessage }) => {
   const [state, setState] = useState({
     email: '',
     username: '',
@@ -116,12 +120,13 @@ const SignupForm = ({ onSignupConfirm, onSignupClose }) => {
               autoComplete="new-password"
               onChange={handleChange}
             />
+
             <Button color="teal" type="submit" content="Inscription" disabled={isEmpty(email) || isEmpty(username) || isEmpty(password)} />
+            {errorMessage ? <Message>{errorMessage}</Message> : null}
           </Segment>
         </Form>
         <Message>
-          Déjà un compte ?
-          {' '}
+          Déjà inscrit(e) ?
           <Button basic compact type="button" content="Se connecter" onClick={onSignupClose} />
         </Message>
       </Grid.Column>
@@ -131,6 +136,10 @@ const SignupForm = ({ onSignupConfirm, onSignupClose }) => {
 SignupForm.propTypes = {
   onSignupConfirm: PropTypes.func.isRequired,
   onSignupClose: PropTypes.func.isRequired,
+  errorMessage: PropTypes.string,
+};
+LoginForm.defaultProps = {
+  errorMessage: null,
 };
 
 const mapStateToProps = ({ auth: { isAuthenticated } }) => ({
@@ -145,55 +154,61 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const Login = ({ isAuthenticated, onAuth }) => {
-  const [state, setState] = useState({
-    isSignupOpen: false,
-    errorMessage: null,
-  });
-  const { isSignupOpen, errorMessage } = state;
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
-  const login = async (email, password) => {
+  const onLoginConfirm = async (email, password) => {
     try {
       const { token, user } = await authenticate(email, password);
 
       localStorage.setItem('token', token);
-
-      setState({ ...state, errorMessage: null });
-
+      setErrorMessage(null);
       onAuth(user);
     } catch (error) {
-      setState({ ...state, errorMessage: error.message });
+      console.error(error.message);
+      setErrorMessage('Erreur : la connexion a échoué');
     }
   };
 
-  const signup = async (email, username, password) => {
+  const onSignupConfirm = async (email, username, password) => {
     try {
       const { token, user } = await createUser(username, email, password);
 
       localStorage.setItem('token', token);
-
-      setState({ ...state, errorMessage: null });
-
+      setErrorMessage(null);
       onAuth(user);
     } catch (error) {
-      setState({ ...state, errorMessage: error.message });
+      console.error(error.message);
+      setErrorMessage('Erreur : l\'inscription a échoué');
     }
+  };
+
+  const onSignupOpen = () => {
+    setErrorMessage(null);
+    setIsSignupOpen(true);
+  };
+
+  const onSignupClose = () => {
+    setErrorMessage(null);
+    setIsSignupOpen(false);
   };
 
   return (
     <Container>
       {isAuthenticated && <Redirect to="/" />}
-      {errorMessage && <div>{errorMessage}</div>}
       {isSignupOpen ? (
         <SignupForm
-          onSignupConfirm={signup}
-          onSignupClose={() => setState({ ...state, isSignupOpen: false })}
+          onSignupConfirm={onSignupConfirm}
+          onSignupClose={onSignupClose}
+          errorMessage={errorMessage}
         />
       ) : (
-        <LoginForm
-          onLoginConfirm={login}
-          onSignupOpen={() => setState({ ...state, isSignupOpen: true })}
-        />
-      )}
+          <LoginForm
+            onLoginConfirm={onLoginConfirm}
+            onSignupOpen={onSignupOpen}
+            errorMessage={errorMessage}
+          />
+        )}
     </Container>
   );
 };
