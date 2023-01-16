@@ -23,7 +23,7 @@
     "jsonwebtoken": "^9.0.0",
     "morgan": "^1.9.1",
     "pg": "^7.17.0",
-    "sequelize": "^5.21.3"
+    "sequelize": "^5.22.5"
   },
   "devDependencies": {
     "@babel/cli": "^7.20.7",
